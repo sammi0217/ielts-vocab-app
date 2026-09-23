@@ -7,7 +7,7 @@ import { createMockFetch } from "./mock.js";
 import { attachSwipe } from "./swipe.js";
 import { exportExcel } from "./export.js";
 
-const SYNC_URL = ""; // Apps Script Web App URL (filled in after deployment)
+const SYNC_URL = "https://script.google.com/macros/s/AKfycbzGSSab2jHFWL7D8LQCEaUNaIAHx5-XBKCe9aUPlaN6I2dEDcMxbbQjZYXc4fxy3sOIbg/exec"; // Apps Script Web App URL
 const PAGE_URL = "https://sammi0217.github.io/ielts-vocab-app/";
 const MOCK = new URLSearchParams(location.search).has("mock");
 
