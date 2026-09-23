@@ -131,7 +131,9 @@ function renderHome() {
 
 /* ===== cards ===== */
 function startPortion(round, portion) {
-  openDeck({ mode: "portion", round, portion, deck: portionIndices(portion), title: `第 ${portion} 份` });
+  const deck = portionIndices(portion).filter(i => i < data.words.length);
+  if (!deck.length) { toast("這一份目前沒有單字"); return; }
+  openDeck({ mode: "portion", round, portion, deck, title: `第 ${portion} 份` });
 }
 function openDeck(o) {
   sess = { ...o, pos: 0, flipped: false, seen: new Set(), startedAt: Date.now() };

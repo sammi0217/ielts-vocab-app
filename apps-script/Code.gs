@@ -10,6 +10,8 @@ const LOG_START = 14;
 const FAM = ["未學習", "學習中", "熟悉", "已掌握"];
 const TZ = "Asia/Taipei";
 const MAX_OPS = 200; // remembered opIds for idempotent retries (property value limit ~9KB)
+const LOG_TITLE = "7 份輪替複習紀錄（327 字分 7 份，一天一份；7 份跑完＝1 輪）";
+const LOG_HEADER = ["輪次", "份數（1–7）", "日期", "本次複習單字數", "花費時間（分鐘）", "備註", ""];
 
 function doPost(e) {
   let req;
@@ -76,7 +78,7 @@ function getAll_() {
   const log = [];
   if (llast >= LOG_START) {
     lg.getRange(LOG_START, 1, llast - LOG_START + 1, 6).getValues().forEach(r => {
-      if (r[0] === "" && r[1] === "") return;
+      if (r[1] === "") return;
       log.push({
         round: toNum_(r[0]), portion: toNum_(r[1]), date: ymd_(r[2]),
         words: toNum_(r[3]), minutes: toNum_(r[4]), note: String(r[5] || ""),
@@ -102,12 +104,14 @@ function addLog_(req) {
   const round = Number(req.round), portion = Number(req.portion);
   if (!(round >= 1) || !(portion >= 1 && portion <= 7) || !isYmd_(req.date)) return { ok: false, error: "bad_request" };
   const lg = SpreadsheetApp.getActive().getSheetByName(SHEET_LOG);
+  lg.getRange(LOG_START - 2, 1).setValue(LOG_TITLE);
+  lg.getRange(LOG_START - 1, 1, 1, LOG_HEADER.length).setValues([LOG_HEADER]);
   const n = Math.max(lg.getLastRow() - LOG_START + 1, 0);
   let row = LOG_START + n;
   if (n) {
     const vals = lg.getRange(LOG_START, 1, n, 2).getValues();
     for (let i = 0; i < n; i++) {
-      if (vals[i][0] === "" && vals[i][1] === "") { row = LOG_START + i; break; }
+      if (vals[i][1] === "") { row = LOG_START + i; break; }
     }
   }
   lg.getRange(row, 1, 1, 6).setValues([[
