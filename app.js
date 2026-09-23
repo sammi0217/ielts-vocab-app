@@ -55,10 +55,13 @@ function renderSync(s = sync.status()) {
 
 /* ===== boot ===== */
 function showSetup(msg = "") {
+  sess = null;
+  window.speechSynthesis?.cancel();
   $("main").classList.add("hidden");
   $("viewCards").classList.add("hidden");
   $("viewSetup").classList.remove("hidden");
   $("setupMsg").textContent = msg;
+  if (!MOCK) $("setupIn").value = token;
 }
 function showMain() {
   $("viewSetup").classList.add("hidden");
@@ -87,7 +90,7 @@ async function boot() {
 }
 $("btnSetup").onclick = () => {
   const v = $("setupIn").value.trim();
-  if (!v) return;
+  if (!v) { if (token) boot(); return; }
   token = v; storage.set("iv_token", v); boot();
 };
 
@@ -155,7 +158,11 @@ function renderCard() {
   $("doneArea").classList.toggle("hidden", !atEnd);
   if (atEnd) { renderDone(); return; }
   const w = data.words[sess.deck[sess.pos]];
-  $("card").classList.toggle("flipped", sess.flipped);
+  const card = $("card");
+  card.classList.add("no-anim");
+  card.classList.toggle("flipped", sess.flipped);
+  void card.offsetWidth;
+  card.classList.remove("no-anim");
   $("fCat").textContent = w.cat; famTag($("fFam"), w.fam);
   $("fWord").textContent = w.w; $("fPos").textContent = w.pos; $("fEx").textContent = w.ex; $("fExZh").textContent = w.exzh;
   $("bWord").textContent = w.w; famTag($("bFam"), w.fam);
@@ -198,6 +205,7 @@ function renderDone() {
 }
 function go(d) {
   if (!sess) return;
+  sess.lock = false;
   const np = sess.pos + d;
   if (np < 0 || np > sess.deck.length) return;
   sess.pos = np; sess.flipped = false;
@@ -214,7 +222,8 @@ function setFam(i, f) {
   sync.enqueue({ op: "fam", row: w.row, w: w.w, fam: f, date: t });
 }
 function rate(f) {
-  if (!sess || sess.pos >= sess.deck.length) return;
+  if (!sess || sess.pos >= sess.deck.length || sess.lock) return;
+  sess.lock = true;
   const at = sess.pos;
   setFam(sess.deck[at], f);
   renderCard();
@@ -231,7 +240,8 @@ $("btnNext").onclick = () => go(1);
 $("btnBack").onclick = closeDeck;
 $("btnDoneBack").onclick = () => go(-1);
 document.addEventListener("keydown", e => {
-  if (!sess || $("sheet").classList.contains("open") || e.target.matches("input,select")) return;
+  if (!sess || $("sheet").classList.contains("open") || e.target.matches?.("input,select")) return;
+  if (e.repeat && /^[1-4]$/.test(e.key)) return;
   if (e.key === " ") { e.preventDefault(); flip(); }
   else if (e.key === "ArrowLeft") go(-1);
   else if (e.key === "ArrowRight") go(1);

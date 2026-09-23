@@ -73,7 +73,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 10px;border-radius:20px;background:var(--surface);border:2px solid transparent;text-align:left;min-height:88px}
 .tile b{font-size:14px;font-weight:600}
 .tile span{font-size:12px;color:var(--muted)}
-.tile em{font-style:normal;font-size:12px;font-weight:500;margin-top:auto;padding:2px 8px;border-radius:999px;background:var(--f0);color:var(--f0-ink)}
+.tile em{font-style:normal;font-size:12px;font-weight:500;margin-top:auto;padding:2px 8px;border-radius:999px;background:var(--f0);color:var(--f0-ink);white-space:nowrap}
 .st-today{border-color:var(--ink)}
 .st-today em{background:var(--lemon);color:var(--f1-ink)}
 .st-done em{background:var(--f3);color:var(--f3-ink)}
@@ -86,10 +86,12 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .cards-top b{flex:1;min-width:0;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbar{height:8px;background:var(--surface);border-radius:999px;margin:8px 0 14px;overflow:hidden}
 .cbar i{display:block;height:100%;background:var(--dark);border-radius:999px;width:0;transition:width .25s ease}
+#viewCards{overflow-x:clip}
 .swipe{touch-action:pan-y;user-select:none;-webkit-user-select:none;margin-bottom:12px}
 .stage{perspective:1400px}
 .card{display:grid;min-height:320px;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
 .card.flipped{transform:rotateY(180deg)}
+.card.no-anim{transition:none}
 @media (prefers-reduced-motion: reduce){.card{transition:none}}
 .face{grid-area:1/1;position:relative;min-height:320px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border-radius:28px;padding:22px 22px 20px;display:flex;flex-direction:column;cursor:pointer;box-shadow:var(--shadow)}
 .face.back{transform:rotateY(180deg);background:var(--mint)}
@@ -111,7 +113,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .fam-0{background:var(--f0);color:var(--f0-ink)} .fam-1{background:var(--f1);color:var(--f1-ink)}
 .fam-2{background:var(--f2);color:var(--f2-ink)} .fam-3{background:var(--f3);color:var(--f3-ink)}
 .rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-.rate button{border-radius:18px;padding:12px 4px;min-height:52px;font-size:14px;font-weight:500;border:2px solid transparent}
+.rate button{border-radius:18px;padding:12px 4px;min-height:52px;font-size:14px;font-weight:500;border:2px solid transparent;touch-action:manipulation}
 .rate .r0{background:var(--f0);color:var(--f0-ink)} .rate .r1{background:var(--f1);color:var(--f1-ink)}
 .rate .r2{background:var(--f2);color:var(--f2-ink)} .rate .r3{background:var(--f3);color:var(--f3-ink)}
 .rate button.on{border-color:var(--ink)}
