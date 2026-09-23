@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>雅思單字複習</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAE3F5; --surface:#FFFFFF; --ink:#1E1D24; --muted:#7B7A87; --line:#E9E6F0;
+  --dark:#1C1B21; --dark-ink:#FFFFFF;
+  --lilac:#DCD1F2; --mint:#D6E9E3; --lemon:#FBE6A3; --sky:#C9D3EF;
+  --f0:#EDEBF3; --f1:#FBE6A3; --f2:#C9D3EF; --f3:#CFE8DE;
+  --f0-ink:#5A5966; --f1-ink:#5A4300; --f2-ink:#2B3A6B; --f3-ink:#1F5A45;
+  --miss:#F6D6D6; --miss-ink:#8A2B2B;
+  --shadow:0 10px 30px rgba(60,40,110,.10);
+  --sans:"Poppins","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1826; --surface:#26223A; --ink:#F1EEF8; --muted:#A39FB5; --line:#352F4B;
+    --dark:#F1EEF8; --dark-ink:#1B1826;
+    --lilac:#3E3560; --mint:#2B4A43; --lemon:#5E4E1E; --sky:#2F3A5E;
+    --f0:#332F45; --f1:#5E4E1E; --f2:#2F3A5E; --f3:#2B4A43;
+    --f0-ink:#D8D4E6; --f1-ink:#F7E3A1; --f2-ink:#C8D6F5; --f3-ink:#BFEAD6;
+    --miss:#4E2A31; --miss-ink:#F3C9CF;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1826; --surface:#26223A; --ink:#F1EEF8; --muted:#A39FB5; --line:#352F4B;
+  --dark:#F1EEF8; --dark-ink:#1B1826;
+  --lilac:#3E3560; --mint:#2B4A43; --lemon:#5E4E1E; --sky:#2F3A5E;
+  --f0:#332F45; --f1:#5E4E1E; --f2:#2F3A5E; --f3:#2B4A43;
+  --f0-ink:#D8D4E6; --f1-ink:#F7E3A1; --f2-ink:#C8D6F5; --f3-ink:#BFEAD6;
+  --miss:#4E2A31; --miss-ink:#F3C9CF;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 14px;min-height:42px}
+.wrap{max-width:560px;margin:0 auto;padding:14px 16px 40px}
+.hidden{display:none !important}
+
+/* header + tabs */
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 0 6px}
+.brand{font-size:26px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+.brand small{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:2px}
+.icon-btn{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);font-size:18px}
+.tabs{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;margin:10px 0 14px}
+.tab{padding:8px 16px;border-radius:999px;color:var(--muted);font-weight:500}
+.tab[aria-selected="true"]{background:var(--dark);color:var(--dark-ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 18px;min-height:44px;font-weight:500}
+.btn.primary{background:var(--dark);color:var(--dark-ink);border-color:var(--dark)}
+.btn:disabled{opacity:.45;cursor:default}
+.hint{color:var(--muted);font-size:13px}
+.sync{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap}
+
+/* home */
+.today{position:relative;background:var(--lilac);border-radius:28px;padding:20px 20px 18px;margin-bottom:14px;overflow:hidden}
+.today::after{content:"✦";position:absolute;right:18px;top:12px;font-size:24px;color:rgba(255,255,255,.75)}
+.today::before{content:"✦";position:absolute;right:48px;top:40px;font-size:11px;color:rgba(255,255,255,.8)}
+.t-date{font-size:14px;font-weight:500;opacity:.75}
+.t-main{font-size:30px;font-weight:600;line-height:1.2;margin:4px 0 2px;letter-spacing:-.01em}
+.t-sub{font-size:13px;opacity:.72;margin-bottom:14px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 10px;border-radius:20px;background:var(--surface);border:2px solid transparent;text-align:left;min-height:88px}
+.tile b{font-size:14px;font-weight:600}
+.tile span{font-size:12px;color:var(--muted)}
+.tile em{font-style:normal;font-size:12px;font-weight:500;margin-top:auto;padding:2px 8px;border-radius:999px;background:var(--f0);color:var(--f0-ink)}
+.st-today{border-color:var(--ink)}
+.st-today em{background:var(--lemon);color:var(--f1-ink)}
+.st-done em{background:var(--f3);color:var(--f3-ink)}
+.st-missed em{background:var(--miss);color:var(--miss-ink)}
+.st-upcoming{opacity:.72}
+.home-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:500}
+
+/* cards */
+.cards-top{display:flex;align-items:center;gap:10px;padding:8px 0 4px}
+.cards-top b{flex:1;min-width:0;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbar{height:8px;background:var(--surface);border-radius:999px;margin:8px 0 14px;overflow:hidden}
+.cbar i{display:block;height:100%;background:var(--dark);border-radius:999px;width:0;transition:width .25s ease}
+.swipe{touch-action:pan-y;user-select:none;-webkit-user-select:none;margin-bottom:12px}
+.stage{perspective:1400px}
+.card{display:grid;min-height:320px;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.card.flipped{transform:rotateY(180deg)}
+@media (prefers-reduced-motion: reduce){.card{transition:none}}
+.face{grid-area:1/1;position:relative;min-height:320px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border-radius:28px;padding:22px 22px 20px;display:flex;flex-direction:column;cursor:pointer;box-shadow:var(--shadow)}
+.face.back{transform:rotateY(180deg);background:var(--mint)}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:500}
+.meta .cat{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.word{font-size:34px;line-height:1.15;font-weight:600;margin:18px 0 2px;word-break:break-word;letter-spacing:-.01em}
+.pos{color:var(--muted);font-size:15px;font-weight:500}
+.ex{margin-top:auto;padding-top:16px;border-top:1px dashed var(--line);font-size:17px;line-height:1.5;font-weight:500}
+.ex-zh{color:var(--muted);font-size:14px;margin-top:6px}
+.speak{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;margin-top:10px;padding:8px 14px;border-radius:999px;background:var(--lemon);align-self:flex-start}
+.zh{font-size:26px;font-weight:600;margin:14px 0 4px}
+.def{font-size:15px;line-height:1.55}
+.bex{margin-top:14px;padding-top:12px;border-top:1px dashed rgba(0,0,0,.12);font-size:14px;line-height:1.5}
+.bex span{display:block;opacity:.6;font-size:12px;font-weight:500;margin-bottom:2px}
+.face.back .ex-zh{color:var(--ink);opacity:.75;margin-top:2px}
+.pairs{margin-top:auto;padding-top:14px;border-top:1px dashed rgba(0,0,0,.12);display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:14px}
+.pairs span{display:block;opacity:.6;font-size:12px;margin-bottom:2px;font-weight:500}
+.fam-tag{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.fam-0{background:var(--f0);color:var(--f0-ink)} .fam-1{background:var(--f1);color:var(--f1-ink)}
+.fam-2{background:var(--f2);color:var(--f2-ink)} .fam-3{background:var(--f3);color:var(--f3-ink)}
+.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.rate button{border-radius:18px;padding:12px 4px;min-height:52px;font-size:14px;font-weight:500;border:2px solid transparent}
+.rate .r0{background:var(--f0);color:var(--f0-ink)} .rate .r1{background:var(--f1);color:var(--f1-ink)}
+.rate .r2{background:var(--f2);color:var(--f2-ink)} .rate .r3{background:var(--f3);color:var(--f3-ink)}
+.rate button.on{border-color:var(--ink)}
+.nav{display:flex;justify-content:center;align-items:center;gap:8px}
+.nav .btn{display:none}
+.pos-ind{color:var(--muted);font-size:13px;font-weight:500}
+.kbd{display:none;color:var(--muted);font-size:12px;margin-top:10px;text-align:center}
+@media (min-width:768px){.nav{justify-content:space-between}.nav .btn{display:inline-flex}.kbd{display:block}}
+.done-card{background:var(--mint);border-radius:28px;padding:32px 22px;text-align:center;box-shadow:var(--shadow)}
+.done-card h2{font-size:26px;margin:0 0 6px;font-weight:600}
+.done-card p{opacity:.72;margin:0 0 18px}
+.done-card .btn{width:100%;margin-top:8px}
+
+/* list */
+.list-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.list-tools input,.list-tools .btn{grid-column:1/-1}
+.count{color:var(--muted);font-size:13px;font-weight:500;margin-bottom:8px}
+.tbl{width:100%;border-collapse:separate;border-spacing:0 8px}
+.tbl td{padding:12px 14px;background:var(--surface);vertical-align:top}
+.tbl td:first-child{border-radius:20px 0 0 20px}
+.tbl td:last-child{border-radius:0 20px 20px 0}
+.tbl .w{font-size:17px;font-weight:600}
+.tbl .w i{color:var(--muted);font-size:13px;margin-left:6px;font-style:normal;font-weight:500}
+.tbl .z{color:var(--muted);font-size:14px}
+.tbl select{min-height:36px;padding:5px 12px;font-size:13px}
+.tbl .c{color:var(--muted);font-size:12px}
+.empty{padding:32px;text-align:center;color:var(--muted);border-radius:20px !important}
+
+/* setup, settings sheet, toast */
+.setup{background:var(--surface);border-radius:28px;padding:24px 20px;margin-top:40px;box-shadow:var(--shadow)}
+.setup h1{font-size:22px;margin:0 0 6px;font-weight:600}
+.setup input{width:100%;margin:12px 0}
+.setup .btn{width:100%}
+.msg{color:var(--miss-ink);font-size:14px;min-height:20px;margin-top:8px}
+.sheet{position:fixed;inset:0;background:rgba(30,20,60,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.sheet.open{display:flex}
+.panel{background:var(--surface);border-radius:28px 28px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px));width:100%;max-width:560px;max-height:85vh;overflow:auto}
+.panel h2{font-size:20px;margin:0 0 10px;font-weight:600}
+.panel p{margin:8px 0;font-size:13px;color:var(--muted)}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.opt input{flex:1;min-width:0}
+.full{width:100%;margin-top:12px}
+.status{font-size:14px;margin-top:10px;min-height:20px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--dark);color:var(--dark-ink);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;white-space:nowrap}
+.toast.show{opacity:1}
+@media (max-width:430px){
+  .wrap{padding:10px 16px 32px}
+  .brand{font-size:22px}
+  .t-main{font-size:26px}
+  .tiles{gap:6px}
+  .tile{padding:10px 8px;min-height:80px}
+  .face{padding:18px 18px 16px;border-radius:24px}
+  .word{font-size:28px;margin:14px 0 2px}
+  .ex{font-size:16px;padding-top:14px}
+  .zh{font-size:22px}
+  .rate button{font-size:13px;padding:10px 2px;min-height:48px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== first-run / error: enter sync code ===== -->
+  <section id="viewSetup" class="setup hidden">
+    <h1>輸入同步碼</h1>
+    <p class="hint">同步碼是你在 Apps Script「指令碼屬性」設定的 TOKEN。只會存在這台裝置。</p>
+    <input id="setupIn" type="password" autocomplete="off" placeholder="同步碼" aria-label="同步碼">
+    <button class="btn primary" id="btnSetup">開始使用</button>
+    <div class="msg" id="setupMsg"></div>
+  </section>
+
+  <!-- ===== home + list ===== -->
+  <div id="main" class="hidden">
+    <div class="top">
+      <div class="brand">雅思單字<small id="brandCount"></small></div>
+      <button class="icon-btn" id="btnSettings" title="設定" aria-label="設定">⚙︎</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabHome" aria-selected="true">首頁</button>
+      <button class="tab" role="tab" id="tabList" aria-selected="false">篩選列表</button>
+    </div>
+
+    <section id="viewHome">
+      <div class="today">
+        <div class="t-date" id="tDate"></div>
+        <div class="t-main" id="tMain"></div>
+        <div class="t-sub" id="tSub"></div>
+        <button class="btn primary" id="btnStart">開始 →</button>
+      </div>
+      <div class="tiles" id="tiles"></div>
+      <div class="home-foot"><span id="roundsDone"></span><span class="sync" id="syncHome"></span></div>
+    </section>
+
+    <section id="viewList" class="hidden">
+      <div class="list-tools">
+        <input id="q" type="search" placeholder="搜尋單字或中文" aria-label="搜尋">
+        <select id="fCatSel" aria-label="分類"></select>
+        <select id="fFamSel" aria-label="熟悉度">
+          <option value="">全部熟悉度</option>
+          <option value="0">未學習</option><option value="1">學習中</option>
+          <option value="2">熟悉</option><option value="3">已掌握</option>
+        </select>
+        <button class="btn primary" id="btnFilterDeck"></button>
+      </div>
+      <div class="count" id="listCount"></div>
+      <table class="tbl" id="tbl"></table>
+    </section>
+  </div>
+
+  <!-- ===== cards ===== -->
+  <section id="viewCards" class="hidden">
+    <div class="cards-top">
+      <button class="btn" id="btnBack">← 返回</button>
+      <b id="cTitle"></b>
+      <span class="sync" id="syncCards"></span>
+    </div>
+    <div class="cbar"><i id="cBar"></i></div>
+
+    <div id="cardArea">
+      <div class="swipe" id="swipe">
+        <div class="stage">
+          <div class="card" id="card">
+            <div class="face front">
+              <div class="meta"><span class="cat" id="fCat"></span><span class="fam-tag" id="fFam"></span></div>
+              <div class="word" id="fWord"></div>
+              <div class="pos" id="fPos"></div>
+              <button class="speak" id="btnSpeak" type="button">🔊 念一次</button>
+              <div class="ex" id="fEx"></div>
+              <div class="ex-zh" id="fExZh"></div>
+            </div>
+            <div class="face back">
+              <div class="meta"><span class="cat" id="bWord"></span><span class="fam-tag" id="bFam"></span></div>
+              <div class="zh" id="bZh"></div>
+              <div class="def" id="bDef"></div>
+              <div class="bex"><span>例句</span><div id="bEx"></div><div class="ex-zh" id="bExZh"></div></div>
+              <div class="pairs">
+                <div><span>同義詞</span><div id="bSyn"></div></div>
+                <div><span>反義詞</span><div id="bAnt"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rate" id="rate">
+        <button class="r0" data-f="0">未學習</button>
+        <button class="r1" data-f="1">學習中</button>
+        <button class="r2" data-f="2">熟悉</button>
+        <button class="r3" data-f="3">已掌握</button>
+      </div>
+      <div class="nav">
+        <button class="btn" id="btnPrev">上一張</button>
+        <span class="pos-ind" id="posInd"></span>
+        <button class="btn primary" id="btnNext">下一張 →</button>
+      </div>
+      <div class="kbd">空白鍵翻面 · ← → 換張 · 1–4 熟悉度 · Esc 返回</div>
+    </div>
+
+    <div id="doneArea" class="hidden">
+      <div class="done-card">
+        <h2 id="dTitle"></h2>
+        <p id="dSub"></p>
+        <button class="btn primary" id="btnMark"></button>
+        <button class="btn" id="btnDoneBack">← 回到最後一張</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== settings ===== -->
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <h2>設定</h2>
+    <div class="opt"><span>同步狀態</span><span class="sync" id="syncSettings"></span><button class="btn" id="btnRetry">重新同步</button></div>
+    <div class="opt"><input id="tokenIn" type="password" autocomplete="off" placeholder="同步碼" aria-label="同步碼"><button class="btn" id="btnSaveToken">更新</button></div>
+    <div class="opt"><span>發音口音</span>
+      <select id="accentSel"><option value="en-GB">英式 (UK)</option><option value="en-US">美式 (US)</option></select>
+    </div>
+    <button class="btn primary full" id="btnIcs">加入行事曆（每天 8:00 提醒）</button>
+    <p>下載後用 Google 日曆「設定 → 匯入」。若到時間沒跳通知，到該日曆的設定把「預設通知」改成活動開始時。</p>
+    <button class="btn full" id="btnExport">匯出 Excel（備份）</button>
+    <div class="status" id="exportStatus"></div>
+    <button class="btn full" id="btnClose">關閉</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
