@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+# vocabulary content is copyrighted — never commit it (repo is public)
+data/
+dist/
+mock/
+.claude/
+node_modules/
+.superpowers/
