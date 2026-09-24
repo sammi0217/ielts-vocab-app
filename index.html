@@ -204,14 +204,13 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .toast.show{opacity:1}
 
 /* launch splash: the icon's grid lights up cell by cell, then fades into the app */
-#splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;transition:opacity .4s ease}
+#splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s ease}
 #splash.out{opacity:0;pointer-events:none}
 .sgrid{display:grid;grid-template-columns:repeat(3,46px);gap:10px;transition:transform .4s cubic-bezier(.2,.7,.2,1)}
 #splash.out .sgrid{transform:scale(1.12)}
 .sgrid i{width:46px;height:46px;border-radius:13px;background:var(--surface-2);animation:light .38s cubic-bezier(.2,.7,.2,1) both;animation-delay:var(--d)}
 @keyframes light{0%{background:var(--surface-2);transform:scale(.72)}60%{transform:scale(1.06)}100%{background:var(--c);transform:scale(1)}}
-.sname{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.3em;padding-left:.3em; /* balance trailing letter-spacing */color:var(--muted);animation:rise .6s .5s both}
-@media (prefers-reduced-motion: reduce){.sgrid i{animation:none;background:var(--c)}.sname{animation:none}}
+@media (prefers-reduced-motion: reduce){.sgrid i{animation:none;background:var(--c)}}
 
 /* entrance: stagger the home blocks once */
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -242,7 +241,6 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
     <i style="--c:var(--lime-2);--d:.09s"></i><i style="--c:var(--lime);--d:.27s"></i><i style="--c:var(--lime);--d:.45s"></i>
     <i style="--c:var(--surface-2);--d:0s"></i><i style="--c:var(--lime);--d:.54s"></i><i style="--c:var(--paper);--d:.63s"></i>
   </div>
-  <div class="sname">雅思單字</div>
 </div>
 <div class="wrap">
 
