@@ -137,21 +137,27 @@ test("famCounts tallies the four levels", () => {
   assert.deepEqual(L.famCounts([{ fam: 0 }, { fam: 3 }, { fam: 3 }, { fam: 1 }]), [1, 1, 0, 2]);
 });
 
-test("dailySeries fills missing days with zero", () => {
-  const daily = { "2026-09-24": 47, "2026-09-26": 12 };
-  assert.deepEqual(L.dailySeries(daily, ["2026-09-24", "2026-09-25", "2026-09-26"]), [
-    { date: "2026-09-24", n: 47 }, { date: "2026-09-25", n: 0 }, { date: "2026-09-26", n: 12 },
-  ]);
+test("lastDays lists n days ending today", () => {
   assert.deepEqual(L.lastDays("2026-10-01", 3), ["2026-09-29", "2026-09-30", "2026-10-01"]);
 });
 
-test("applyOps counts fam ops into daily without mutating input", () => {
-  const data = { words: [{ row: 2, w: "a", fam: 0, date: "", cnt: 0 }], log: [], daily: { "2026-09-24": 5 } };
-  const out = L.applyOps(data, [
-    { op: "fam", row: 2, w: "a", fam: 1, date: "2026-09-24" },
-    { op: "fam", row: 2, w: "a", fam: 2, date: "2026-09-25" },
-  ]);
-  assert.deepEqual(out.daily, { "2026-09-24": 6, "2026-09-25": 1 });
-  assert.deepEqual(data.daily, { "2026-09-24": 5 });
-  assert.deepEqual(L.applyOps({ words: [], log: [] }, []).daily, {});
+test("heatmap: Monday-first weeks anchored at the start week, with day states", () => {
+  // 2026-09-25 is a Friday; start week begins Mon 9/21 -> 2 weeks = 9/21 .. 10/4
+  const log = [{ date: "2026-09-23" }, { date: "2026-09-25" }, { date: "2026-09-25" }];
+  const g = L.heatmap(log, "2026-09-25", 2);
+  assert.equal(g.length, 2);
+  assert.equal(g[0][0].date, "2026-09-21");
+  assert.equal(g[1][6].date, "2026-10-04");
+  assert.equal(g[1][0].state, "future");
+  const at = d => g.flat().find(c => c.date === d);
+  assert.equal(at("2026-09-22").state, "pre");
+  assert.deepEqual(at("2026-09-23"), { date: "2026-09-23", state: "done", n: 1 });
+  assert.equal(at("2026-09-24").state, "missed");
+  assert.deepEqual(at("2026-09-25"), { date: "2026-09-25", state: "done", n: 2 });
+  assert.equal(at("2026-09-26").state, "future");
+  assert.equal(L.heatmap([], "2026-09-25", 1).flat().find(c => c.date === "2026-09-25").state, "today");
+  // after the anchored window is used up, it ends with the current week
+  const late = L.heatmap([], "2026-12-30", 2);
+  assert.equal(late[1][0].date, "2026-12-28");
+  assert.equal(late[0][0].date, "2026-12-21");
 });

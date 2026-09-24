@@ -42,7 +42,7 @@ export function createSync({
       err.code = res.error;
       throw err;
     }
-    const data = { words: res.words, log: res.log, daily: res.daily || {} };
+    const data = { words: res.words, log: res.log };
     storage.set(K_CACHE, data);
     set(queue.length ? "pending" : "ok");
     return applyOps(data, queue);

@@ -1,7 +1,7 @@
 import {
   FAM, PORTION_SIZES, ymd, addDays, fmtMD, fmtMDW, schedule, portionDate, portionStatus,
   canMarkDone, isDone, completedRounds, portionIndices, buildIcs, ratedSince, isRated,
-  roundDates, lastDays, dailySeries, streak, famCounts,
+  roundDates, streak, famCounts, heatmap,
 } from "./logic.js";
 import { icon } from "./icons.js";
 import { createSync } from "./sync.js";
@@ -20,7 +20,7 @@ const storage = {
 };
 const prefs = storage.get("iv_prefs") || { accent: "en-GB" };
 let token = MOCK ? "mock" : storage.get("iv_token") || "";
-let data = { words: [], log: [], daily: {} };
+let data = { words: [], log: [] };
 let sess = null; // current card session
 let listRows = [];
 
@@ -109,11 +109,11 @@ $("tabList").onclick = () => showTab("list");
 
 /* ===== home ===== */
 let selDay = null;        // date picked in the week strip (null = today)
-let chartRange = "week";  // "week" = this round, "month" = last 30 days
 let entered = false;
 const wd = d => fmtMDW(d).match(/（(.)）/)[1];
 const PILL = { done: "已完成", today: "今天", missed: "錯過", upcoming: "" };
-const FAM_COLORS = ["var(--f0)", "var(--f1)", "var(--f2)", "var(--f3)"];
+const HEAT_WEEKS = 13; // ~3 months: the length of the foundation plan
+const WD_ROWS = ["一", "", "三", "", "五", "", "日"];
 function portionProgress(round, k, t) {
   const deck = portionIndices(k).filter(i => i < data.words.length);
   const since = ratedSince(round, k, t);
@@ -143,38 +143,33 @@ function renderHome() {
   $("btnStart").innerHTML = st === "done" ? "再看一次" : done ? "繼續 →" : "開始 →";
   $("btnStart").onclick = () => startPortion(s.round, k);
 
-  const c = famCounts(data.words), total = data.words.length || 1;
+  const done7 = [1, 2, 3, 4, 5, 6, 7].filter(k => isDone(log, s.round, k)).length;
   $("sStreak").textContent = streak(log, t);
+  $("roundsDone").textContent = `第 ${s.round} 輪 ${done7}/7 份 · 已完整輪替 ${completedRounds(log)} 次`;
+  renderHeat(t);
+
+  const c = famCounts(data.words), total = data.words.length || 1, max = Math.max(...c, 1);
   $("sMastery").textContent = Math.round((c[3] / total) * 100);
-  $("sWeek").textContent = dailySeries(data.daily || {}, dates).reduce((a, x) => a + x.n, 0);
-
-  $("distTotal").textContent = `${data.words.length} 字`;
-  $("dist").innerHTML = c.map((v, f) => v ? `<i style="flex:${v};background:${FAM_COLORS[f]}"></i>` : "").join("");
-  $("legend").innerHTML = c.map((v, f) => `<span style="--c:${FAM_COLORS[f]}"><b>${v}</b>${FAM[f]}</span>`).join("");
-
-  renderChart(t, dates);
-  $("roundsDone").textContent = `第 ${s.round} 輪 · 已完整輪替 ${completedRounds(log)} 次`;
+  $("famSub").textContent = `已掌握 ${c[3]} / ${data.words.length} 字`;
+  $("famBars").innerHTML = c.map((v, f) =>
+    `<div class="fam-bar f${f}"><i style="height:calc(36px + (100% - 64px) * ${v / max})"><b>${v}</b></i><small>${FAM[f]}</small></div>`).join("");
 }
-function renderChart(t, dates) {
-  const days = chartRange === "week" ? dates : lastDays(t, 30);
-  const series = dailySeries(data.daily || {}, days);
-  const goal = PORTION_SIZES[0], max = Math.max(goal, ...series.map(x => x.n)) * 1.1;
-  const week = chartRange === "week";
-  const ch = $("chart");
-  ch.style.setProperty("--gap", week ? "10px" : "3px");
-  ch.innerHTML = `<div class="goal" style="bottom:calc(20px + (100% - 38px) * ${goal / max})"><span>目標 ${goal}</span></div>` +
-    series.map((x, i) => {
-      const label = week ? wd(x.date) : (i % 5 === 4 ? Number(x.date.slice(8)) : "");
-      const future = x.date > t;
-      const h = future ? 0 : Math.max(4, (x.n / max) * 100), inside = h > 28;
-      const val = week && x.n ? `<em>${x.n}</em>` : "";
-      return `<div class="bar${x.n ? "" : " zero"}${x.date === t ? " is-today" : ""}" title="${fmtMD(x.date)}：${x.n} 次">` +
-        (inside ? "" : val) +
-        `<i style="height:${h}%;${future ? "min-height:0" : ""}">${inside ? val : ""}</i><small>${label}</small></div>`;
-    }).join("");
+function renderHeat(t) {
+  const cols = heatmap(data.log, t, HEAT_WEEKS), el = $("heat");
+  el.style.setProperty("--weeks", HEAT_WEEKS);
+  let html = "", lastMonth = "";
+  cols.forEach((col, c) => {
+    const m = col[0].date.slice(5, 7);
+    if (m !== lastMonth) { html += `<span class="ml" style="grid-column:${c + 2}">${Number(m)}月</span>`; lastMonth = m; }
+  });
+  WD_ROWS.forEach((d, r) => { html += `<span class="dl" style="grid-row:${r + 2}">${d}</span>`; });
+  cols.forEach((col, c) => col.forEach((x, r) => {
+    const cls = x.state === "done" && x.n > 1 ? "done more" : x.state;
+    html += `<i class="${cls}" style="grid-column:${c + 2};grid-row:${r + 2}" title="${fmtMD(x.date)}${x.n ? `：完成 ${x.n} 份` : ""}"></i>`;
+  }));
+  el.innerHTML = html;
+  el.setAttribute("aria-label", `最近 ${HEAT_WEEKS} 週的完成紀錄，連續 ${streak(data.log, t)} 天`);
 }
-$("rngWeek").onclick = () => { chartRange = "week"; $("rngWeek").setAttribute("aria-pressed", "true"); $("rngMonth").setAttribute("aria-pressed", "false"); renderHome(); };
-$("rngMonth").onclick = () => { chartRange = "month"; $("rngMonth").setAttribute("aria-pressed", "true"); $("rngWeek").setAttribute("aria-pressed", "false"); renderHome(); };
 
 /* ===== cards ===== */
 function startPortion(round, portion) {
@@ -280,7 +275,6 @@ function flip() {
 function setFam(i, f) {
   const w = data.words[i], t = today();
   w.fam = f; w.date = t; w.cnt = (w.cnt || 0) + 1;
-  data.daily = { ...data.daily, [t]: (data.daily?.[t] || 0) + 1 };
   sync.enqueue({ op: "fam", row: w.row, w: w.w, fam: f, date: t });
 }
 function rate(f) {

@@ -12,7 +12,7 @@ test("wrong token is rejected", async () => {
 test("get returns a copy of the seed", async () => {
   const f = createMockFetch(seed);
   const r = await post(f, { op: "get", token: "mock" });
-  assert.deepEqual(r, { ok: true, ...seed, daily: {} });
+  assert.deepEqual(r, { ok: true, ...seed });
 });
 
 test("fam updates the word once per opId", async () => {
@@ -22,7 +22,6 @@ test("fam updates the word once per opId", async () => {
   assert.deepEqual(await post(f, op), { ok: true, dup: true });
   const r = await post(f, { op: "get", token: "mock" });
   assert.deepEqual(r.words[0], { row: 2, w: "apple", fam: 2, date: "2026-09-23", cnt: 1 });
-  assert.deepEqual(r.daily, { "2026-09-23": 1 });
   assert.equal(seed.words[0].cnt, 0);
 });
 

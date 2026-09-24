@@ -84,17 +84,15 @@ export function portionIndices(k) {
 export function applyOps(data, ops) {
   const words = data.words.map(w => ({ ...w }));
   const log = data.log.map(r => ({ ...r }));
-  const daily = { ...(data.daily || {}) };
   for (const op of ops) {
     if (op.op === "fam") {
-      daily[op.date] = (daily[op.date] || 0) + 1;
       const w = words.find(x => x.row === op.row && x.w === op.w);
       if (w) { w.fam = op.fam; w.date = op.date; w.cnt = (w.cnt || 0) + 1; }
     } else if (op.op === "done") {
       log.push({ round: op.round, portion: op.portion, date: op.date, words: op.words, minutes: op.minutes, note: op.note || "" });
     }
   }
-  return { ...data, words, log, daily };
+  return { ...data, words, log };
 }
 
 /* ===== dashboard stats ===== */
@@ -105,15 +103,27 @@ export function roundDates(today, start = START) {
 export function lastDays(today, n) {
   return Array.from({ length: n }, (_, i) => addDays(today, i - n + 1));
 }
-export function dailySeries(daily, dates) {
-  return dates.map(date => ({ date, n: daily[date] || 0 }));
-}
 // Consecutive days (ending today, or yesterday if today isn't done yet) with at least one portion marked done.
 export function streak(log, today) {
   const days = new Set(log.map(r => r.date));
   let d = days.has(today) ? today : addDays(today, -1), n = 0;
   while (days.has(d)) { n++; d = addDays(d, -1); }
   return n;
+}
+// Contribution-style grid: `weeks` columns (Mon..Sun). It starts at the week of `start` so the first months
+// show the whole plan ahead; once today passes the last column it scrolls to end with the current week.
+// Each cell: { date, state: "pre" | "future" | "done" | "missed" | "today", n } where n = portions marked done that day.
+export function heatmap(log, today, weeks, start = START) {
+  const count = {};
+  for (const r of log) count[r.date] = (count[r.date] || 0) + 1;
+  const mondayOf = d => addDays(d, -((parseYmd(d).getDay() + 6) % 7));
+  const trailing = addDays(mondayOf(today), -(weeks - 1) * 7), anchored = mondayOf(start);
+  const first = trailing > anchored ? trailing : anchored;
+  return Array.from({ length: weeks }, (_, c) => Array.from({ length: 7 }, (_, r) => {
+    const date = addDays(first, c * 7 + r), n = count[date] || 0;
+    const state = date < start ? "pre" : date > today ? "future" : n ? "done" : date === today ? "today" : "missed";
+    return { date, state, n };
+  }));
 }
 export function famCounts(words) {
   const c = [0, 0, 0, 0];
