@@ -66,8 +66,6 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .hero{position:relative;overflow:hidden;background:var(--grad);color:var(--on-accent);border-radius:var(--r) var(--r) var(--r-big) var(--r);padding:20px 20px 22px;margin-bottom:10px}
 .hero-no{position:absolute;right:14px;top:-18px;font-family:var(--display);font-size:128px;font-weight:800;line-height:1;color:rgba(20,20,19,.07);pointer-events:none}
 .hero-top{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
-.pill{font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--on-accent);color:var(--lime)}
-.pill.st-missed{background:transparent;color:var(--on-accent);box-shadow:inset 0 0 0 1.5px var(--on-accent)}
 .hero-num{display:flex;align-items:baseline;gap:6px;margin:10px 0 12px}
 .hero-num b{font-size:56px;font-weight:700;line-height:.9}
 .hero-num span{font-size:22px;font-weight:600;opacity:.55}
@@ -86,6 +84,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .kpi b{font-size:40px;font-weight:700;line-height:1;color:var(--lime)}
 .kpi span{font-size:13px;color:var(--muted)}
 .box > .hint{margin:4px 0 14px;font-size:12px}
+.box-streak .kpi{margin-bottom:14px}
 .box-streak .kpi small{padding-left:6px}
 
 /* contribution-style heatmap: rows Mon..Sun, one column per week */
@@ -128,8 +127,8 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .card.flipped{transform:rotateY(180deg)}
 .card.no-anim{transition:none}
 @media (prefers-reduced-motion: reduce){.card,.hbar i{transition:none}}
-.face{grid-area:1/1;position:relative;min-height:320px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border-radius:var(--r) var(--r) var(--r-big) var(--r);padding:22px 22px 20px;display:flex;flex-direction:column;cursor:pointer;box-shadow:var(--shadow)}
-.face.back{transform:rotateY(180deg);background:var(--lime-3);color:var(--on-accent);border-radius:var(--r) var(--r) var(--r) var(--r-big)}
+.face{grid-area:1/1;position:relative;min-height:320px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border-radius:var(--r) var(--r) 44px var(--r);padding:22px 22px 26px;display:flex;flex-direction:column;cursor:pointer;box-shadow:var(--shadow)}
+.face.back{transform:rotateY(180deg);background:var(--lime-3);color:var(--on-accent);border-radius:var(--r) var(--r) var(--r) 44px}
 .meta{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:500}
 .face.back .meta{color:rgba(20,20,19,.55)}
 .meta .cat{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -140,21 +139,18 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .speak{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;margin-top:12px;padding:8px 14px;border-radius:999px;background:var(--surface-2);color:var(--lime);align-self:flex-start}
 .zh{font-size:26px;font-weight:700;margin:14px 0 4px}
 .def{font-size:15px;line-height:1.55}
-.bex{margin-top:14px;padding-top:12px;border-top:1px dashed rgba(20,20,19,.18);font-size:14px;line-height:1.5}
+.bex{margin:14px 0 14px;padding-top:12px;border-top:1px dashed rgba(20,20,19,.18);font-size:14px;line-height:1.5}
 .bex span{display:block;opacity:.55;font-size:12px;font-weight:500;margin-bottom:2px}
 .face.back .ex-zh{color:var(--on-accent);opacity:.7;margin-top:2px}
 .pairs{margin-top:auto;padding-top:14px;border-top:1px dashed rgba(20,20,19,.18);display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:14px}
 .pairs span{display:block;opacity:.55;font-size:12px;margin-bottom:2px;font-weight:500}
-.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 /* unselected = outline; selected this round = solid fill, greener = more familiar */
 .rate button{border-radius:18px;padding:12px 4px;min-height:52px;font-size:14px;font-weight:600;background:transparent;border:1.5px solid var(--line);color:var(--ink);touch-action:manipulation;transition:background .15s,border-color .15s,color .15s}
 .rate .r0.on{background:var(--f0);border-color:var(--f0);color:var(--f0-ink)}
 .rate .r1.on{background:var(--f1);border-color:var(--f1);color:var(--f-ink)}
 .rate .r2.on{background:var(--f2);border-color:var(--f2);color:var(--f-ink)}
 .rate .r3.on{background:var(--f3);border-color:var(--f3);color:var(--f-ink)}
-.rstat{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:12px;padding:0 4px}
-.rstat span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
-.rstat .is-rated{color:var(--lime)}
 .nav{display:none;justify-content:space-between;align-items:center;gap:8px}
 .nav .btn{display:none}
 .pos-ind{color:var(--muted);font-size:13px;font-weight:500}
@@ -214,7 +210,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
   .wrap{padding:10px 16px 32px}
   .brand{font-size:23px}
   .hero-num b{font-size:50px}
-  .face{padding:18px 18px 16px}
+  .face{padding:18px 18px 24px}
   .word{font-size:30px;margin:14px 0 2px}
   .ex{font-size:16px;padding-top:14px}
   .zh{font-size:22px}
@@ -249,14 +245,13 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
       <div class="week" id="week" role="group" aria-label="本輪 7 天"></div>
       <div class="hero">
         <span class="hero-no num" id="hNo" aria-hidden="true"></span>
-        <div class="hero-top"><span id="hLabel"></span><span class="pill" id="hPill"></span></div>
+        <div class="hero-top"><span id="hLabel"></span></div>
         <div class="hero-num num"><b id="hNum"></b><span id="hDen"></span><small>已評</small></div>
         <div class="hbar"><i id="hBar"></i></div>
         <button class="btn primary" id="btnStart"></button>
       </div>
       <div class="box box-streak">
         <div class="kpi"><small>連續完成</small><div><b class="num" id="sStreak"></b><span>天</span></div></div>
-        <div class="hint" id="roundsDone"></div>
         <div class="heat" id="heat" role="img"></div>
         <div class="heat-legend"><span><i class="h-missed"></i>沒完成</span><span><i class="h-done"></i>完成</span><span><i class="h-more"></i>補做多份</span></div>
       </div>
@@ -324,7 +319,6 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
         <button class="r2" data-f="2">熟悉</button>
         <button class="r3" data-f="3">已掌握</button>
       </div>
-      <div class="rstat" aria-live="polite"><span id="rLast"></span><span id="rState"></span></div>
       <div class="nav">
         <button class="btn" id="btnPrev">上一張</button>
         <span class="pos-ind" id="posInd"></span>

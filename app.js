@@ -1,6 +1,6 @@
 import {
   FAM, PORTION_SIZES, ymd, addDays, fmtMD, fmtMDW, schedule, portionDate, portionStatus,
-  canMarkDone, isDone, completedRounds, portionIndices, buildIcs, ratedSince, isRated,
+  canMarkDone, isDone, portionIndices, buildIcs, ratedSince, isRated,
   roundDates, streak, famCounts, heatmap,
 } from "./logic.js";
 import { icon } from "./icons.js";
@@ -111,7 +111,6 @@ $("tabList").onclick = () => showTab("list");
 let selDay = null;        // date picked in the week strip (null = today)
 let entered = false;
 const wd = d => fmtMDW(d).match(/（(.)）/)[1];
-const PILL = { done: "已完成", today: "今天", missed: "錯過", upcoming: "" };
 const HEAT_WEEKS = 13; // ~3 months: the length of the foundation plan
 const WD_ROWS = ["一", "", "三", "", "五", "", "日"];
 function portionProgress(round, k, t) {
@@ -134,18 +133,14 @@ function renderHome() {
   const k = dates.indexOf(sel) + 1, st = portionStatus(log, s.round, k, t);
   const { deck, done } = portionProgress(s.round, k, t), n = deck.length;
   $("hNo").textContent = String(k).padStart(2, "0");
-  $("hLabel").textContent = `第 ${k} 份 · ${fmtMDW(sel)}`;
-  $("hPill").textContent = PILL[st];
-  $("hPill").className = `pill st-${st}${PILL[st] ? "" : " hidden"}`;
+  $("hLabel").textContent = `第 ${k} 份`;
   $("hNum").textContent = done;
   $("hDen").textContent = `/ ${n}`;
   $("hBar").style.width = n ? Math.round((done / n) * 100) + "%" : "0";
   $("btnStart").innerHTML = st === "done" ? "再看一次" : done ? "繼續 →" : "開始 →";
   $("btnStart").onclick = () => startPortion(s.round, k);
 
-  const done7 = [1, 2, 3, 4, 5, 6, 7].filter(k => isDone(log, s.round, k)).length;
   $("sStreak").textContent = streak(log, t);
-  $("roundsDone").textContent = `第 ${s.round} 輪 ${done7}/7 份 · 已完整輪替 ${completedRounds(log)} 次`;
   renderHeat(t);
 
   const c = famCounts(data.words), total = data.words.length || 1, max = Math.max(...c, 1);
@@ -180,9 +175,9 @@ function startPortion(round, portion) {
   if (first > 0) { sess.pos = first; renderCard(); }
 }
 function openDeck(o) {
-  // `since`: a word touched on/after this date counts as rated in this session; `prev` keeps each word's level before this session.
+  // `since`: a word touched on/after this date counts as rated in this session.
   const since = o.mode === "portion" ? ratedSince(o.round, o.portion, today()) : today();
-  sess = { ...o, since, prev: new Map(), pos: 0, flipped: false, startedAt: Date.now() };
+  sess = { ...o, since, pos: 0, flipped: false, startedAt: Date.now() };
   $("main").classList.add("hidden");
   $("viewCards").classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -205,7 +200,6 @@ function renderCard() {
   $("doneArea").classList.toggle("hidden", !atEnd);
   if (atEnd) { renderDone(); return; }
   const i = sess.deck[sess.pos], w = data.words[i];
-  if (!sess.prev.has(i)) sess.prev.set(i, w.date ? FAM[w.fam] : "—");
   const card = $("card");
   card.classList.add("no-anim");
   card.classList.toggle("flipped", sess.flipped);
@@ -219,12 +213,9 @@ function renderCard() {
   $("bAnt").textContent = w.ant && w.ant !== "-" ? w.ant : "—";
   $("posInd").textContent = `${sess.pos + 1} / ${n}`;
   $("btnPrev").disabled = sess.pos === 0;
-  const touched = !!w.date && w.date >= sess.since, rated = isRated(w, sess.since);
+  // a button is filled only when this word was rated during this round
+  const touched = !!w.date && w.date >= sess.since;
   document.querySelectorAll("#rate button").forEach(b => b.classList.toggle("on", touched && +b.dataset.f === w.fam));
-  $("rLast").textContent = `上次：${sess.prev.get(i)}`;
-  const st = $("rState");
-  st.classList.toggle("is-rated", rated);
-  st.innerHTML = icon(rated ? "rated" : "unrated") + `${rated ? "已評" : "未評"} · ${done}/${n}`;
 }
 function renderDone() {
   const n = sess.deck.length, done = ratedCount(), left = n - done;
