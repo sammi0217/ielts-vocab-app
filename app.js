@@ -55,6 +55,19 @@ function renderSync(s = sync.status()) {
   ["syncHome", "syncCards", "syncSettings"].forEach(id => { $(id).innerHTML = icon(ic) + t; });
 }
 
+/* ===== launch splash ===== */
+const SPLASH_MIN_MS = 1100; // let the grid animation finish even when cached data renders instantly
+const splashStart = performance.now();
+let splashGone = false;
+function hideSplash() {
+  if (splashGone) return;
+  splashGone = true;
+  const el = $("splash");
+  // the home blocks rise in as the splash fades, so the entrance is actually seen
+  setTimeout(() => { el.classList.add("out"); $("viewHome").classList.add("enter"); setTimeout(() => el.remove(), 450); },
+    Math.max(0, SPLASH_MIN_MS - (performance.now() - splashStart)));
+}
+
 /* ===== boot ===== */
 function showSetup(msg = "") {
   sess = null;
@@ -64,6 +77,7 @@ function showSetup(msg = "") {
   $("viewSetup").classList.remove("hidden");
   $("setupMsg").textContent = msg;
   if (!MOCK) $("setupIn").value = token;
+  hideSplash();
 }
 function showMain() {
   $("viewSetup").classList.add("hidden");
@@ -73,6 +87,7 @@ function showMain() {
   $("main").classList.remove("hidden");
   renderHome();
   if (!$("viewList").classList.contains("hidden")) renderList();
+  hideSplash();
 }
 async function boot() {
   if (!MOCK && !SYNC_URL) { showSetup("網頁還沒設定 Apps Script 網址（SYNC_URL）。"); return; }
@@ -109,7 +124,6 @@ $("tabList").onclick = () => showTab("list");
 
 /* ===== home ===== */
 let selDay = null;        // date picked in the week strip (null = today)
-let entered = false;
 const wd = d => fmtMDW(d).match(/（(.)）/)[1];
 const HEAT_WEEKS = 13; // ~3 months: the length of the foundation plan
 const WD_ROWS = ["一", "", "三", "", "五", "", "日"];
@@ -121,7 +135,6 @@ function portionProgress(round, k, t) {
 function renderHome() {
   const t = today(), s = schedule(t), dates = roundDates(t), log = data.log;
   const sel = dates.includes(selDay) ? selDay : t;
-  if (!entered) { $("viewHome").classList.add("enter"); entered = true; }
 
   $("week").innerHTML = dates.map((d, i) => {
     const st = portionStatus(log, s.round, i + 1, t);

@@ -9,6 +9,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#141413">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="img/icon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="雅思單字">
 <style>
 /* Dark-only theme: charcoal + a single lime accent. Familiarity reads as "the greener, the better". */
 :root{
@@ -196,6 +203,16 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--lime);color:var(--on-accent);font-weight:600;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;white-space:nowrap}
 .toast.show{opacity:1}
 
+/* launch splash: the icon's grid lights up cell by cell, then fades into the app */
+#splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;transition:opacity .4s ease}
+#splash.out{opacity:0;pointer-events:none}
+.sgrid{display:grid;grid-template-columns:repeat(3,46px);gap:10px;transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+#splash.out .sgrid{transform:scale(1.12)}
+.sgrid i{width:46px;height:46px;border-radius:13px;background:var(--surface-2);animation:light .38s cubic-bezier(.2,.7,.2,1) both;animation-delay:var(--d)}
+@keyframes light{0%{background:var(--surface-2);transform:scale(.72)}60%{transform:scale(1.06)}100%{background:var(--c);transform:scale(1)}}
+.sname{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.3em;color:var(--muted);animation:rise .6s .5s both}
+@media (prefers-reduced-motion: reduce){.sgrid i,.sname{animation:none;background:var(--c)}}
+
 /* entrance: stagger the home blocks once */
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 #viewHome.enter > *{animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
@@ -219,6 +236,14 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+  <div class="sgrid">
+    <i style="--c:var(--surface-2);--d:0s"></i><i style="--c:var(--lime-2);--d:.18s"></i><i style="--c:var(--lime);--d:.36s"></i>
+    <i style="--c:var(--lime-2);--d:.09s"></i><i style="--c:var(--lime);--d:.27s"></i><i style="--c:var(--lime);--d:.45s"></i>
+    <i style="--c:var(--surface-2);--d:0s"></i><i style="--c:var(--lime);--d:.54s"></i><i style="--c:var(--paper);--d:.63s"></i>
+  </div>
+  <div class="sname">雅思單字</div>
+</div>
 <div class="wrap">
 
   <!-- ===== first-run / error: enter sync code ===== -->
