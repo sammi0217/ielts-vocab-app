@@ -102,3 +102,19 @@ test("buildIcs: 7 weekly-repeating 08:00 Taipei events, CRLF, folded lines", () 
   for (const line of ics.split("\r\n")) assert.ok(enc.encode(line).length <= 75, line);
   assert.ok(!/[^\r]\n/.test(ics), "bare LF found");
 });
+
+test("ratedSince: portion date once reached, otherwise today (preview)", () => {
+  assert.equal(L.ratedSince(1, 1, "2026-09-24"), "2026-09-23");
+  assert.equal(L.ratedSince(1, 2, "2026-09-24"), "2026-09-24");
+  assert.equal(L.ratedSince(1, 5, "2026-09-24"), "2026-09-24");
+  assert.equal(L.ratedSince(2, 1, "2026-10-01"), "2026-09-30");
+});
+
+test("isRated: touched on/after since and not 未學習", () => {
+  const since = "2026-09-23";
+  assert.equal(L.isRated({ fam: 1, date: "2026-09-23" }, since), true);
+  assert.equal(L.isRated({ fam: 3, date: "2026-09-25" }, since), true);
+  assert.equal(L.isRated({ fam: 0, date: "2026-09-23" }, since), false);
+  assert.equal(L.isRated({ fam: 2, date: "2026-09-22" }, since), false);
+  assert.equal(L.isRated({ fam: 2, date: "" }, since), false);
+});

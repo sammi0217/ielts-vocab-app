@@ -65,6 +65,14 @@ export function completedRounds(log) {
   for (const s of by.values()) if ([1, 2, 3, 4, 5, 6, 7].every(k => s.has(k))) n++;
   return n;
 }
+/* A word counts as rated for a portion when it was touched on/after `since` with a level above 未學習. */
+export function ratedSince(round, k, today, start = START) {
+  const d = portionDate(round, k, start);
+  return d <= today ? d : today;
+}
+export function isRated(w, since) {
+  return w.fam >= 1 && !!w.date && w.date >= since;
+}
 export function portionIndices(k) {
   const [a, b] = PORTION_BOUNDS[k - 1];
   const out = [];

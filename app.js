@@ -1,7 +1,8 @@
 import {
   FAM, PORTION_SIZES, ymd, addDays, fmtMD, fmtMDW, schedule, portionDate, portionStatus,
-  canMarkDone, isDone, completedRounds, portionIndices, buildIcs,
+  canMarkDone, isDone, completedRounds, portionIndices, buildIcs, ratedSince, isRated,
 } from "./logic.js";
+import { icon } from "./icons.js";
 import { createSync } from "./sync.js";
 import { createMockFetch } from "./mock.js";
 import { attachSwipe } from "./swipe.js";
@@ -46,11 +47,11 @@ function download(name, blob) {
 
 /* ===== sync badge ===== */
 function renderSync(s = sync.status()) {
-  const t = s.state === "bad_token" ? "⚠ 同步碼錯誤"
-    : s.pending ? `⟳ ${s.pending} 筆未同步`
-    : s.state === "offline" ? "⚠ 離線"
-    : "✓ 已同步";
-  ["syncHome", "syncCards", "syncSettings"].forEach(id => { $(id).textContent = t; });
+  const [ic, t] = s.state === "bad_token" ? ["warning", "同步碼錯誤"]
+    : s.pending ? ["sync", `${s.pending} 筆未同步`]
+    : s.state === "offline" ? ["warning", "離線"]
+    : ["check", "已同步"];
+  ["syncHome", "syncCards", "syncSettings"].forEach(id => { $(id).innerHTML = icon(ic) + t; });
 }
 
 /* ===== boot ===== */
@@ -106,13 +107,13 @@ $("tabHome").onclick = () => showTab("home");
 $("tabList").onclick = () => showTab("list");
 
 /* ===== home ===== */
-const LABEL = { done: "已完成 ✓", today: "今天", missed: "錯過", upcoming: "之後" };
+const LABEL = { done: icon("check") + "已完成", today: "今天", missed: "錯過" };
 function renderHome() {
   const t = today(), s = schedule(t), log = data.log;
   $("tDate").textContent = fmtMDW(t);
   if (portionStatus(log, s.round, s.portion, t) === "done") {
     const tm = addDays(t, 1);
-    $("tMain").textContent = "今天完成了 ✓";
+    $("tMain").innerHTML = "今天完成了 " + icon("check");
     $("tSub").textContent = `明天 ${fmtMD(tm)} 做第 ${schedule(tm).portion} 份`;
     $("btnStart").textContent = `再看一次第 ${s.portion} 份`;
   } else {
@@ -123,7 +124,8 @@ function renderHome() {
   $("btnStart").onclick = () => startPortion(s.round, s.portion);
   $("tiles").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(k => {
     const st = portionStatus(log, s.round, k, t);
-    return `<button class="tile st-${st}" data-k="${k}"><b>第 ${k} 份</b><span>${fmtMD(portionDate(s.round, k))}</span><em>${LABEL[st]}</em></button>`;
+    const tag = LABEL[st] ? `<em>${LABEL[st]}</em>` : "";
+    return `<button class="tile st-${st}" data-k="${k}"><b>第 ${k} 份</b><span>${fmtMD(portionDate(s.round, k))}</span>${tag}</button>`;
   }).join("");
   $("tiles").querySelectorAll(".tile").forEach(b => { b.onclick = () => startPortion(s.round, +b.dataset.k); });
   $("roundsDone").textContent = `已完整輪替 ${completedRounds(log)} 次`;
@@ -136,7 +138,9 @@ function startPortion(round, portion) {
   openDeck({ mode: "portion", round, portion, deck, title: `第 ${portion} 份` });
 }
 function openDeck(o) {
-  sess = { ...o, pos: 0, flipped: false, seen: new Set(), startedAt: Date.now() };
+  // `since`: a word touched on/after this date counts as rated in this session; `prev` keeps each word's level before this session.
+  const since = o.mode === "portion" ? ratedSince(o.round, o.portion, today()) : today();
+  sess = { ...o, since, prev: new Map(), pos: 0, flipped: false, startedAt: Date.now() };
   $("main").classList.add("hidden");
   $("viewCards").classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -150,54 +154,62 @@ function closeDeck() {
   $("main").classList.remove("hidden");
   showTab(wasFilter ? "list" : "home");
 }
-function famTag(el, f) { el.textContent = FAM[f]; el.className = "fam-tag fam-" + f; }
+const ratedCount = () => sess.deck.filter(i => isRated(data.words[i], sess.since)).length;
 function renderCard() {
-  const n = sess.deck.length, atEnd = sess.pos >= n;
-  if (!atEnd) sess.seen.add(sess.deck[sess.pos]);
+  const n = sess.deck.length, atEnd = sess.pos >= n, done = ratedCount();
   $("cTitle").textContent = `${sess.title} · ${Math.min(sess.pos + 1, n)} / ${n}`;
-  $("cBar").style.width = Math.round((sess.seen.size / n) * 100) + "%";
+  $("cBar").style.width = Math.round((done / n) * 100) + "%";
   $("cardArea").classList.toggle("hidden", atEnd);
   $("doneArea").classList.toggle("hidden", !atEnd);
   if (atEnd) { renderDone(); return; }
-  const w = data.words[sess.deck[sess.pos]];
+  const i = sess.deck[sess.pos], w = data.words[i];
+  if (!sess.prev.has(i)) sess.prev.set(i, w.date ? FAM[w.fam] : "—");
   const card = $("card");
   card.classList.add("no-anim");
   card.classList.toggle("flipped", sess.flipped);
   void card.offsetWidth;
   card.classList.remove("no-anim");
-  $("fCat").textContent = w.cat; famTag($("fFam"), w.fam);
+  $("fCat").textContent = w.cat;
   $("fWord").textContent = w.w; $("fPos").textContent = w.pos; $("fEx").textContent = w.ex; $("fExZh").textContent = w.exzh;
-  $("bWord").textContent = w.w; famTag($("bFam"), w.fam);
+  $("bWord").textContent = w.w;
   $("bZh").textContent = w.zh; $("bDef").textContent = w.en; $("bEx").textContent = w.ex; $("bExZh").textContent = w.exzh;
   $("bSyn").textContent = w.syn || "—";
   $("bAnt").textContent = w.ant && w.ant !== "-" ? w.ant : "—";
   $("posInd").textContent = `${sess.pos + 1} / ${n}`;
   $("btnPrev").disabled = sess.pos === 0;
-  document.querySelectorAll("#rate button").forEach(b => b.classList.toggle("on", +b.dataset.f === w.fam));
+  const touched = !!w.date && w.date >= sess.since, rated = isRated(w, sess.since);
+  document.querySelectorAll("#rate button").forEach(b => b.classList.toggle("on", touched && +b.dataset.f === w.fam));
+  $("rLast").textContent = `上次：${sess.prev.get(i)}`;
+  const st = $("rState");
+  st.classList.toggle("is-rated", rated);
+  st.innerHTML = icon(rated ? "rated" : "unrated") + `${rated ? "已評" : "未評"} · ${done}/${n}`;
 }
 function renderDone() {
-  const n = sess.seen.size;
+  const n = sess.deck.length, done = ratedCount(), left = n - done;
   const mins = Math.max(1, Math.round((Date.now() - sess.startedAt) / 60000));
-  const b = $("btnMark");
+  const b = $("btnMark"), jump = $("btnJump");
   b.disabled = false;
+  jump.classList.toggle("hidden", !left);
   if (sess.mode !== "portion") {
     $("dTitle").textContent = "看完了";
-    $("dSub").textContent = `共 ${n} 字`;
+    $("dSub").textContent = `已評 ${done} / ${n}`;
     b.textContent = "回列表"; b.onclick = closeDeck;
     return;
   }
   const t = today(), { round, portion } = sess;
-  $("dTitle").textContent = `第 ${portion} 份完成！`;
-  $("dSub").textContent = `看了 ${n} 字 · ${mins} 分鐘`;
+  $("dTitle").textContent = left ? `第 ${portion} 份還沒評完` : `第 ${portion} 份完成！`;
+  $("dSub").textContent = `已評 ${done} / ${n} · ${mins} 分鐘`;
   if (isDone(data.log, round, portion)) {
-    b.textContent = "本輪已標記過 ✓ 回首頁"; b.onclick = closeDeck;
+    b.innerHTML = "本輪已標記過 " + icon("check") + " 回首頁"; b.onclick = closeDeck;
+  } else if (left) {
+    b.textContent = `還有 ${left} 張沒評`; b.disabled = true;
   } else if (!canMarkDone(round, portion, t)) {
     b.textContent = `${fmtMD(portionDate(round, portion))} 當天再標記`; b.disabled = true;
   } else {
     b.textContent = "標記完成";
     b.onclick = () => {
       const note = t > portionDate(round, portion) ? "補做" : "";
-      const entry = { round, portion, date: t, words: n, minutes: mins, note };
+      const entry = { round, portion, date: t, words: done, minutes: mins, note };
       data.log.push(entry);
       sync.enqueue({ op: "done", ...entry });
       toast(`第 ${portion} 份已記錄`);
@@ -241,6 +253,10 @@ $("btnPrev").onclick = () => go(-1);
 $("btnNext").onclick = () => go(1);
 $("btnBack").onclick = closeDeck;
 $("btnDoneBack").onclick = () => go(-1);
+$("btnJump").onclick = () => {
+  const k = sess.deck.findIndex(i => !isRated(data.words[i], sess.since));
+  if (k >= 0) { sess.pos = k; sess.flipped = false; renderCard(); }
+};
 document.addEventListener("keydown", e => {
   if (!sess || $("sheet").classList.contains("open") || e.target.matches?.("input,select")) return;
   if (e.repeat && /^[1-4]$/.test(e.key)) return;
@@ -335,6 +351,7 @@ $("btnExport").onclick = async () => {
 };
 
 /* ===== lifecycle ===== */
+document.querySelectorAll("[data-icon]").forEach(el => { el.outerHTML = icon(el.dataset.icon); });
 window.addEventListener("online", () => sync.flush());
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) return;

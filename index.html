@@ -53,7 +53,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 0 6px}
 .brand{font-size:26px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
 .brand small{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:2px}
-.icon-btn{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);font-size:18px}
+.icon-btn{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);font-size:20px}
 .tabs{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;margin:10px 0 14px}
 .tab{padding:8px 16px;border-radius:999px;color:var(--muted);font-weight:500}
 .tab[aria-selected="true"]{background:var(--dark);color:var(--dark-ink)}
@@ -61,7 +61,8 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .btn.primary{background:var(--dark);color:var(--dark-ink);border-color:var(--dark)}
 .btn:disabled{opacity:.45;cursor:default}
 .hint{color:var(--muted);font-size:13px}
-.sync{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap}
+.sync{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap}
+.ic{width:1em;height:1em;fill:currentColor;flex:none;vertical-align:-0.125em}
 
 /* home */
 .today{position:relative;background:var(--lilac);border-radius:28px;padding:20px 20px 18px;margin-bottom:14px;overflow:hidden}
@@ -74,7 +75,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 10px;border-radius:20px;background:var(--surface);border:2px solid transparent;text-align:left;min-height:88px}
 .tile b{font-size:14px;font-weight:600}
 .tile span{font-size:12px;color:var(--muted)}
-.tile em{font-style:normal;font-size:12px;font-weight:500;margin-top:auto;padding:2px 8px;border-radius:999px;background:var(--f0);color:var(--f0-ink);white-space:nowrap}
+.tile em{display:inline-flex;align-items:center;gap:3px;font-style:normal;font-size:12px;font-weight:500;margin-top:auto;padding:2px 8px;border-radius:999px;background:var(--f0);color:var(--f0-ink);white-space:nowrap}
 .st-today{border-color:var(--ink)}
 .st-today em{background:var(--lemon);color:var(--f1-ink)}
 .st-done em{background:var(--f3);color:var(--f3-ink)}
@@ -110,23 +111,24 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .face.back .ex-zh{color:var(--ink);opacity:.75;margin-top:2px}
 .pairs{margin-top:auto;padding-top:14px;border-top:1px dashed rgba(0,0,0,.12);display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:14px}
 .pairs span{display:block;opacity:.6;font-size:12px;margin-bottom:2px;font-weight:500}
-.fam-tag{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
-.fam-0{background:var(--f0);color:var(--f0-ink)} .fam-1{background:var(--f1);color:var(--f1-ink)}
-.fam-2{background:var(--f2);color:var(--f2-ink)} .fam-3{background:var(--f3);color:var(--f3-ink)}
-.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-.rate button{border-radius:18px;padding:12px 4px;min-height:52px;font-size:14px;font-weight:500;border:2px solid transparent;touch-action:manipulation}
-.rate .r0{background:var(--f0);color:var(--f0-ink)} .rate .r1{background:var(--f1);color:var(--f1-ink)}
-.rate .r2{background:var(--f2);color:var(--f2-ink)} .rate .r3{background:var(--f3);color:var(--f3-ink)}
-.rate button.on{border-color:var(--ink)}
-.nav{display:flex;justify-content:center;align-items:center;gap:8px}
+.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+/* unselected = outline; selected this round = solid fill */
+.rate button{border-radius:18px;padding:12px 4px;min-height:52px;font-size:14px;font-weight:500;background:var(--surface);border:2px solid var(--line);color:var(--ink);touch-action:manipulation;transition:background .15s,border-color .15s}
+.rate .r0.on{background:var(--f0);border-color:var(--f0);color:var(--f0-ink)} .rate .r1.on{background:var(--f1);border-color:var(--f1);color:var(--f1-ink)}
+.rate .r2.on{background:var(--f2);border-color:var(--f2);color:var(--f2-ink)} .rate .r3.on{background:var(--f3);border-color:var(--f3);color:var(--f3-ink)}
+.rstat{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:12px;padding:0 4px}
+.rstat span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.rstat .is-rated{color:var(--f3-ink)}
+.nav{display:none;justify-content:space-between;align-items:center;gap:8px}
 .nav .btn{display:none}
 .pos-ind{color:var(--muted);font-size:13px;font-weight:500}
 .kbd{display:none;color:var(--muted);font-size:12px;margin-top:10px;text-align:center}
-@media (min-width:768px){.nav{justify-content:space-between}.nav .btn{display:inline-flex}.kbd{display:block}}
+@media (min-width:768px){.nav{display:flex}.nav .btn{display:inline-flex}.kbd{display:block}}
 .done-card{background:var(--mint);border-radius:28px;padding:32px 22px;text-align:center;box-shadow:var(--shadow)}
 .done-card h2{font-size:26px;margin:0 0 6px;font-weight:600}
 .done-card p{opacity:.72;margin:0 0 18px}
 .done-card .btn{width:100%;margin-top:8px}
+.speak .ic,.btn .ic{font-size:1.1em}
 
 /* list */
 .list-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
@@ -191,7 +193,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
   <div id="main" class="hidden">
     <div class="top">
       <div class="brand">雅思單字<small id="brandCount"></small></div>
-      <button class="icon-btn" id="btnSettings" title="設定" aria-label="設定">⚙︎</button>
+      <button class="icon-btn" id="btnSettings" title="設定" aria-label="設定"><span data-icon="setting"></span></button>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tabHome" aria-selected="true">首頁</button>
@@ -228,7 +230,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
   <!-- ===== cards ===== -->
   <section id="viewCards" class="hidden">
     <div class="cards-top">
-      <button class="btn" id="btnBack">← 返回</button>
+      <button class="btn" id="btnBack"><span data-icon="back"></span>&nbsp;返回</button>
       <b id="cTitle"></b>
       <span class="sync" id="syncCards"></span>
     </div>
@@ -239,15 +241,15 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
         <div class="stage">
           <div class="card" id="card">
             <div class="face front">
-              <div class="meta"><span class="cat" id="fCat"></span><span class="fam-tag" id="fFam"></span></div>
+              <div class="meta"><span class="cat" id="fCat"></span></div>
               <div class="word" id="fWord"></div>
               <div class="pos" id="fPos"></div>
-              <button class="speak" id="btnSpeak" type="button">🔊 念一次</button>
+              <button class="speak" id="btnSpeak" type="button"><span data-icon="sound"></span>念一次</button>
               <div class="ex" id="fEx"></div>
               <div class="ex-zh" id="fExZh"></div>
             </div>
             <div class="face back">
-              <div class="meta"><span class="cat" id="bWord"></span><span class="fam-tag" id="bFam"></span></div>
+              <div class="meta"><span class="cat" id="bWord"></span></div>
               <div class="zh" id="bZh"></div>
               <div class="def" id="bDef"></div>
               <div class="bex"><span>例句</span><div id="bEx"></div><div class="ex-zh" id="bExZh"></div></div>
@@ -265,6 +267,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
         <button class="r2" data-f="2">熟悉</button>
         <button class="r3" data-f="3">已掌握</button>
       </div>
+      <div class="rstat" aria-live="polite"><span id="rLast"></span><span id="rState"></span></div>
       <div class="nav">
         <button class="btn" id="btnPrev">上一張</button>
         <span class="pos-ind" id="posInd"></span>
@@ -278,6 +281,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
         <h2 id="dTitle"></h2>
         <p id="dSub"></p>
         <button class="btn primary" id="btnMark"></button>
+        <button class="btn" id="btnJump">跳到第一張沒評的</button>
         <button class="btn" id="btnDoneBack">← 回到最後一張</button>
       </div>
     </div>
