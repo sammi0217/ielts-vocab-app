@@ -84,15 +84,41 @@ export function portionIndices(k) {
 export function applyOps(data, ops) {
   const words = data.words.map(w => ({ ...w }));
   const log = data.log.map(r => ({ ...r }));
+  const daily = { ...(data.daily || {}) };
   for (const op of ops) {
     if (op.op === "fam") {
+      daily[op.date] = (daily[op.date] || 0) + 1;
       const w = words.find(x => x.row === op.row && x.w === op.w);
       if (w) { w.fam = op.fam; w.date = op.date; w.cnt = (w.cnt || 0) + 1; }
     } else if (op.op === "done") {
       log.push({ round: op.round, portion: op.portion, date: op.date, words: op.words, minutes: op.minutes, note: op.note || "" });
     }
   }
-  return { ...data, words, log };
+  return { ...data, words, log, daily };
+}
+
+/* ===== dashboard stats ===== */
+export function roundDates(today, start = START) {
+  const { round } = schedule(today, start);
+  return [1, 2, 3, 4, 5, 6, 7].map(k => portionDate(round, k, start));
+}
+export function lastDays(today, n) {
+  return Array.from({ length: n }, (_, i) => addDays(today, i - n + 1));
+}
+export function dailySeries(daily, dates) {
+  return dates.map(date => ({ date, n: daily[date] || 0 }));
+}
+// Consecutive days (ending today, or yesterday if today isn't done yet) with at least one portion marked done.
+export function streak(log, today) {
+  const days = new Set(log.map(r => r.date));
+  let d = days.has(today) ? today : addDays(today, -1), n = 0;
+  while (days.has(d)) { n++; d = addDays(d, -1); }
+  return n;
+}
+export function famCounts(words) {
+  const c = [0, 0, 0, 0];
+  for (const w of words) c[w.fam] = (c[w.fam] || 0) + 1;
+  return c;
 }
 
 /* ===== swipe ===== */

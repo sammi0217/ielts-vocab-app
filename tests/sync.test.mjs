@@ -20,7 +20,7 @@ function fakeFetch(handler) {
   fn.calls = calls;
   return fn;
 }
-const DATA = { words: [{ row: 2, w: "apple", fam: 0, date: "", cnt: 0 }], log: [] };
+const DATA = { words: [{ row: 2, w: "apple", fam: 0, date: "", cnt: 0 }], log: [], daily: {} };
 const FAM_OP = { op: "fam", row: 2, w: "apple", fam: 3, date: "2026-09-23" };
 let n = 0;
 function make(handler, extra = {}) {

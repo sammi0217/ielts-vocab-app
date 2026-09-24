@@ -1,6 +1,7 @@
 import {
   FAM, PORTION_SIZES, ymd, addDays, fmtMD, fmtMDW, schedule, portionDate, portionStatus,
   canMarkDone, isDone, completedRounds, portionIndices, buildIcs, ratedSince, isRated,
+  roundDates, lastDays, dailySeries, streak, famCounts,
 } from "./logic.js";
 import { icon } from "./icons.js";
 import { createSync } from "./sync.js";
@@ -19,7 +20,7 @@ const storage = {
 };
 const prefs = storage.get("iv_prefs") || { accent: "en-GB" };
 let token = MOCK ? "mock" : storage.get("iv_token") || "";
-let data = { words: [], log: [] };
+let data = { words: [], log: [], daily: {} };
 let sess = null; // current card session
 let listRows = [];
 
@@ -107,35 +108,81 @@ $("tabHome").onclick = () => showTab("home");
 $("tabList").onclick = () => showTab("list");
 
 /* ===== home ===== */
-const LABEL = { done: icon("check") + "已完成", today: "今天", missed: "錯過" };
-function renderHome() {
-  const t = today(), s = schedule(t), log = data.log;
-  $("tDate").textContent = fmtMDW(t);
-  if (portionStatus(log, s.round, s.portion, t) === "done") {
-    const tm = addDays(t, 1);
-    $("tMain").innerHTML = "今天完成了 " + icon("check");
-    $("tSub").textContent = `明天 ${fmtMD(tm)} 做第 ${schedule(tm).portion} 份`;
-    $("btnStart").textContent = `再看一次第 ${s.portion} 份`;
-  } else {
-    $("tMain").textContent = `今天做 第 ${s.portion} 份`;
-    $("tSub").textContent = `第 ${s.round} 輪 · 第 ${s.portion}/7 天 · ${PORTION_SIZES[s.portion - 1]} 字`;
-    $("btnStart").textContent = "開始 →";
-  }
-  $("btnStart").onclick = () => startPortion(s.round, s.portion);
-  $("tiles").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(k => {
-    const st = portionStatus(log, s.round, k, t);
-    const tag = LABEL[st] ? `<em>${LABEL[st]}</em>` : "";
-    return `<button class="tile st-${st}" data-k="${k}"><b>第 ${k} 份</b><span>${fmtMD(portionDate(s.round, k))}</span>${tag}</button>`;
-  }).join("");
-  $("tiles").querySelectorAll(".tile").forEach(b => { b.onclick = () => startPortion(s.round, +b.dataset.k); });
-  $("roundsDone").textContent = `已完整輪替 ${completedRounds(log)} 次`;
+let selDay = null;        // date picked in the week strip (null = today)
+let chartRange = "week";  // "week" = this round, "month" = last 30 days
+let entered = false;
+const wd = d => fmtMDW(d).match(/（(.)）/)[1];
+const PILL = { done: "已完成", today: "今天", missed: "錯過", upcoming: "" };
+const FAM_COLORS = ["var(--f0)", "var(--f1)", "var(--f2)", "var(--f3)"];
+function portionProgress(round, k, t) {
+  const deck = portionIndices(k).filter(i => i < data.words.length);
+  const since = ratedSince(round, k, t);
+  return { deck, done: deck.filter(i => isRated(data.words[i], since)).length, since };
 }
+function renderHome() {
+  const t = today(), s = schedule(t), dates = roundDates(t), log = data.log;
+  const sel = dates.includes(selDay) ? selDay : t;
+  if (!entered) { $("viewHome").classList.add("enter"); entered = true; }
+
+  $("week").innerHTML = dates.map((d, i) => {
+    const st = portionStatus(log, s.round, i + 1, t);
+    const cls = `day st-${st}${d === t ? " is-today" : ""}${d === sel ? " is-sel" : ""}`;
+    return `<button class="${cls}" data-d="${d}" aria-pressed="${d === sel}" aria-label="${fmtMDW(d)} 第 ${i + 1} 份"><small>${wd(d)}</small><b>${Number(d.slice(8))}</b><i></i></button>`;
+  }).join("");
+  $("week").querySelectorAll(".day").forEach(b => { b.onclick = () => { selDay = b.dataset.d; renderHome(); }; });
+
+  const k = dates.indexOf(sel) + 1, st = portionStatus(log, s.round, k, t);
+  const { deck, done } = portionProgress(s.round, k, t), n = deck.length;
+  $("hNo").textContent = String(k).padStart(2, "0");
+  $("hLabel").textContent = `第 ${k} 份 · ${fmtMDW(sel)}`;
+  $("hPill").textContent = PILL[st];
+  $("hPill").className = `pill st-${st}${PILL[st] ? "" : " hidden"}`;
+  $("hNum").textContent = done;
+  $("hDen").textContent = `/ ${n}`;
+  $("hBar").style.width = n ? Math.round((done / n) * 100) + "%" : "0";
+  $("btnStart").innerHTML = st === "done" ? "再看一次" : done ? "繼續 →" : "開始 →";
+  $("btnStart").onclick = () => startPortion(s.round, k);
+
+  const c = famCounts(data.words), total = data.words.length || 1;
+  $("sStreak").textContent = streak(log, t);
+  $("sMastery").textContent = Math.round((c[3] / total) * 100);
+  $("sWeek").textContent = dailySeries(data.daily || {}, dates).reduce((a, x) => a + x.n, 0);
+
+  $("distTotal").textContent = `${data.words.length} 字`;
+  $("dist").innerHTML = c.map((v, f) => v ? `<i style="flex:${v};background:${FAM_COLORS[f]}"></i>` : "").join("");
+  $("legend").innerHTML = c.map((v, f) => `<span style="--c:${FAM_COLORS[f]}"><b>${v}</b>${FAM[f]}</span>`).join("");
+
+  renderChart(t, dates);
+  $("roundsDone").textContent = `第 ${s.round} 輪 · 已完整輪替 ${completedRounds(log)} 次`;
+}
+function renderChart(t, dates) {
+  const days = chartRange === "week" ? dates : lastDays(t, 30);
+  const series = dailySeries(data.daily || {}, days);
+  const goal = PORTION_SIZES[0], max = Math.max(goal, ...series.map(x => x.n)) * 1.1;
+  const week = chartRange === "week";
+  const ch = $("chart");
+  ch.style.setProperty("--gap", week ? "10px" : "3px");
+  ch.innerHTML = `<div class="goal" style="bottom:calc(20px + (100% - 38px) * ${goal / max})"><span>目標 ${goal}</span></div>` +
+    series.map((x, i) => {
+      const label = week ? wd(x.date) : (i % 5 === 4 ? Number(x.date.slice(8)) : "");
+      const future = x.date > t;
+      const h = future ? 0 : Math.max(4, (x.n / max) * 100), inside = h > 28;
+      const val = week && x.n ? `<em>${x.n}</em>` : "";
+      return `<div class="bar${x.n ? "" : " zero"}${x.date === t ? " is-today" : ""}" title="${fmtMD(x.date)}：${x.n} 次">` +
+        (inside ? "" : val) +
+        `<i style="height:${h}%;${future ? "min-height:0" : ""}">${inside ? val : ""}</i><small>${label}</small></div>`;
+    }).join("");
+}
+$("rngWeek").onclick = () => { chartRange = "week"; $("rngWeek").setAttribute("aria-pressed", "true"); $("rngMonth").setAttribute("aria-pressed", "false"); renderHome(); };
+$("rngMonth").onclick = () => { chartRange = "month"; $("rngMonth").setAttribute("aria-pressed", "true"); $("rngWeek").setAttribute("aria-pressed", "false"); renderHome(); };
 
 /* ===== cards ===== */
 function startPortion(round, portion) {
   const deck = portionIndices(portion).filter(i => i < data.words.length);
   if (!deck.length) { toast("這一份目前沒有單字"); return; }
   openDeck({ mode: "portion", round, portion, deck, title: `第 ${portion} 份` });
+  const first = sess.deck.findIndex(i => !isRated(data.words[i], sess.since));
+  if (first > 0) { sess.pos = first; renderCard(); }
 }
 function openDeck(o) {
   // `since`: a word touched on/after this date counts as rated in this session; `prev` keeps each word's level before this session.
@@ -233,6 +280,7 @@ function flip() {
 function setFam(i, f) {
   const w = data.words[i], t = today();
   w.fam = f; w.date = t; w.cnt = (w.cnt || 0) + 1;
+  data.daily = { ...data.daily, [t]: (data.daily?.[t] || 0) + 1 };
   sync.enqueue({ op: "fam", row: w.row, w: w.w, fam: f, date: t });
 }
 function rate(f) {

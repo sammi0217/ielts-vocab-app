@@ -6,6 +6,8 @@
  */
 const SHEET_WORDS = "單字庫";
 const SHEET_LOG = "複習紀錄";
+const SHEET_EVENTS = "評分紀錄"; // one row per rating click; feeds the daily chart
+const DAILY_DAYS = 60;
 const LOG_START = 14;
 const FAM = ["未學習", "學習中", "熟悉", "已掌握"];
 const TZ = "Asia/Taipei";
@@ -85,7 +87,26 @@ function getAll_() {
       });
     });
   }
-  return { ok: true, words: words, log: log };
+  const daily = {};
+  const ev = ss.getSheetByName(SHEET_EVENTS);
+  if (ev && ev.getLastRow() >= 2) {
+    const since = Utilities.formatDate(new Date(Date.now() - DAILY_DAYS * 86400000), TZ, "yyyy-MM-dd");
+    ev.getRange(2, 1, ev.getLastRow() - 1, 1).getValues().forEach(r => {
+      const d = ymd_(r[0]);
+      if (d >= since) daily[d] = (daily[d] || 0) + 1;
+    });
+  }
+  return { ok: true, words: words, log: log, daily: daily };
+}
+
+function eventsSheet_(ss) {
+  let sh = ss.getSheetByName(SHEET_EVENTS);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_EVENTS);
+    sh.getRange(1, 1, 1, 4).setValues([["日期", "列號", "單字", "熟悉度"]]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
 }
 
 function setFam_(req) {
@@ -97,6 +118,7 @@ function setFam_(req) {
   if (String(ws.getRange(row, 3).getValue()) !== req.w) return { ok: false, error: "not_found" };
   const cnt = (Number(ws.getRange(row, 13).getValue()) || 0) + 1;
   ws.getRange(row, 11, 1, 3).setValues([[FAM[f], toDate_(req.date), cnt]]);
+  eventsSheet_(SpreadsheetApp.getActive()).appendRow([toDate_(req.date), row, req.w, FAM[f]]);
   return { ok: true, cnt: cnt };
 }
 

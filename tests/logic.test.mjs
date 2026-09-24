@@ -118,3 +118,40 @@ test("isRated: touched on/after since and not 未學習", () => {
   assert.equal(L.isRated({ fam: 2, date: "2026-09-22" }, since), false);
   assert.equal(L.isRated({ fam: 2, date: "" }, since), false);
 });
+
+test("roundDates: the 7 dates of the round containing today", () => {
+  assert.deepEqual(L.roundDates("2026-09-24"), ["2026-09-23", "2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-09-29"]);
+  assert.equal(L.roundDates("2026-09-30")[0], "2026-09-30");
+});
+
+test("streak counts consecutive days with a done entry, today optional", () => {
+  const log = [{ date: "2026-09-23" }, { date: "2026-09-24" }, { date: "2026-09-26" }];
+  assert.equal(L.streak(log, "2026-09-24"), 2);
+  assert.equal(L.streak(log, "2026-09-25"), 2);
+  assert.equal(L.streak(log, "2026-09-26"), 1);
+  assert.equal(L.streak(log, "2026-09-28"), 0);
+  assert.equal(L.streak([], "2026-09-24"), 0);
+});
+
+test("famCounts tallies the four levels", () => {
+  assert.deepEqual(L.famCounts([{ fam: 0 }, { fam: 3 }, { fam: 3 }, { fam: 1 }]), [1, 1, 0, 2]);
+});
+
+test("dailySeries fills missing days with zero", () => {
+  const daily = { "2026-09-24": 47, "2026-09-26": 12 };
+  assert.deepEqual(L.dailySeries(daily, ["2026-09-24", "2026-09-25", "2026-09-26"]), [
+    { date: "2026-09-24", n: 47 }, { date: "2026-09-25", n: 0 }, { date: "2026-09-26", n: 12 },
+  ]);
+  assert.deepEqual(L.lastDays("2026-10-01", 3), ["2026-09-29", "2026-09-30", "2026-10-01"]);
+});
+
+test("applyOps counts fam ops into daily without mutating input", () => {
+  const data = { words: [{ row: 2, w: "a", fam: 0, date: "", cnt: 0 }], log: [], daily: { "2026-09-24": 5 } };
+  const out = L.applyOps(data, [
+    { op: "fam", row: 2, w: "a", fam: 1, date: "2026-09-24" },
+    { op: "fam", row: 2, w: "a", fam: 2, date: "2026-09-25" },
+  ]);
+  assert.deepEqual(out.daily, { "2026-09-24": 6, "2026-09-25": 1 });
+  assert.deepEqual(data.daily, { "2026-09-24": 5 });
+  assert.deepEqual(L.applyOps({ words: [], log: [] }, []).daily, {});
+});
