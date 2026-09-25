@@ -190,7 +190,8 @@ function startPortion(round, portion) {
 function openDeck(o) {
   // `since`: a word touched on/after this date counts as rated in this session.
   const since = o.mode === "portion" ? ratedSince(o.round, o.portion, today()) : today();
-  sess = { ...o, since, pos: 0, flipped: false, startedAt: Date.now() };
+  // `all` is the whole portion; `deck` is what swiping walks through (narrowed to unrated cards in review mode).
+  sess = { ...o, all: o.deck.slice(), review: false, since, pos: 0, flipped: false, startedAt: Date.now() };
   $("main").classList.add("hidden");
   $("viewCards").classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -204,11 +205,12 @@ function closeDeck() {
   $("main").classList.remove("hidden");
   showTab(wasFilter ? "list" : "home");
 }
-const ratedCount = () => sess.deck.filter(i => isRated(data.words[i], sess.since)).length;
+const unrated = () => sess.all.filter(i => !isRated(data.words[i], sess.since));
 function renderCard() {
-  const n = sess.deck.length, atEnd = sess.pos >= n, done = ratedCount();
-  $("cTitle").textContent = `${sess.title} · ${Math.min(sess.pos + 1, n)} / ${n}`;
-  $("cBar").style.width = Math.round((done / n) * 100) + "%";
+  const n = sess.deck.length, atEnd = sess.pos >= n, total = sess.all.length, done = total - unrated().length;
+  const at = `${Math.min(sess.pos + 1, n)} / ${n}`;
+  $("cTitle").textContent = sess.review ? `${sess.title} · 補評 ${at}` : `${sess.title} · ${at}`;
+  $("cBar").style.width = Math.round((done / total) * 100) + "%";
   $("cardArea").classList.toggle("hidden", atEnd);
   $("doneArea").classList.toggle("hidden", !atEnd);
   if (atEnd) { renderDone(); return; }
@@ -231,11 +233,12 @@ function renderCard() {
   document.querySelectorAll("#rate button").forEach(b => b.classList.toggle("on", touched && +b.dataset.f === w.fam));
 }
 function renderDone() {
-  const n = sess.deck.length, done = ratedCount(), left = n - done;
+  const n = sess.all.length, left = unrated().length, done = n - left;
   const mins = Math.max(1, Math.round((Date.now() - sess.startedAt) / 60000));
   const b = $("btnMark"), jump = $("btnJump");
   b.disabled = false;
   jump.classList.toggle("hidden", !left);
+  jump.textContent = `只看沒評的 ${left} 張`;
   if (sess.mode !== "portion") {
     $("dTitle").textContent = "看完了";
     $("dSub").textContent = `已評 ${done} / ${n}`;
@@ -299,9 +302,12 @@ $("btnPrev").onclick = () => go(-1);
 $("btnNext").onclick = () => go(1);
 $("btnBack").onclick = closeDeck;
 $("btnDoneBack").onclick = () => go(-1);
+// review mode: walk only the cards still unrated (incl. ones marked 未學習); rated ones are skipped
 $("btnJump").onclick = () => {
-  const k = sess.deck.findIndex(i => !isRated(data.words[i], sess.since));
-  if (k >= 0) { sess.pos = k; sess.flipped = false; renderCard(); }
+  const rest = unrated();
+  if (!rest.length) return;
+  Object.assign(sess, { deck: rest, review: true, pos: 0, flipped: false, lock: false });
+  renderCard();
 };
 document.addEventListener("keydown", e => {
   if (!sess || $("sheet").classList.contains("open") || e.target.matches?.("input,select")) return;
