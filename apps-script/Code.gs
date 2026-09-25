@@ -8,6 +8,7 @@ const SHEET_WORDS = "單字庫";
 const SHEET_LOG = "複習紀錄";
 const LOG_START = 14;
 const FAM = ["未學習", "學習中", "熟悉", "已掌握"];
+const WORD_COLS = 16; // A–N word data, O 最近拼字, P 拼錯次數
 const TZ = "Asia/Taipei";
 const MAX_OPS = 200; // remembered opIds for idempotent retries (property value limit ~9KB)
 const LOG_TITLE = "7 份輪替複習紀錄（327 字分 7 份，一天一份；7 份跑完＝1 輪）";
@@ -31,6 +32,7 @@ function doPost(e) {
     let res;
     if (req.op === "fam") res = setFam_(req);
     else if (req.op === "done") res = addLog_(req);
+    else if (req.op === "spell") res = setSpell_(req);
     else res = { ok: false, error: "bad_request" };
     if (res.ok && req.opId) rememberOp_(req.opId);
     return out_(res);
@@ -63,13 +65,15 @@ function getAll_() {
   const last = ws.getLastRow();
   const words = [];
   if (last >= 2) {
-    ws.getRange(2, 1, last - 1, 14).getValues().forEach((v, i) => {
+    ensureSpellCols_(ws);
+    ws.getRange(2, 1, last - 1, WORD_COLS).getValues().forEach((v, i) => {
       if (!v[2]) return;
       words.push({
         row: i + 2, cat: String(v[1] || ""), w: String(v[2]), pos: String(v[3] || ""),
         zh: String(v[4] || ""), en: String(v[5] || ""), ex: String(v[6] || ""), exzh: String(v[7] || ""),
         syn: String(v[8] || ""), ant: String(v[9] || "-"), fam: Math.max(0, FAM.indexOf(v[10])),
         date: ymd_(v[11]), cnt: Number(v[12]) || 0, note: String(v[13] || ""),
+        spell: String(v[14] || ""), miss: Number(v[15]) || 0,
       });
     });
   }
@@ -98,6 +102,23 @@ function setFam_(req) {
   const cnt = (Number(ws.getRange(row, 13).getValue()) || 0) + 1;
   ws.getRange(row, 11, 1, 3).setValues([[FAM[f], toDate_(req.date), cnt]]);
   return { ok: true, cnt: cnt };
+}
+
+function ensureSpellCols_(ws) {
+  if (ws.getMaxColumns() < WORD_COLS) ws.insertColumnsAfter(ws.getMaxColumns(), WORD_COLS - ws.getMaxColumns());
+  if (!ws.getRange(1, 15).getValue()) ws.getRange(1, 15, 1, 2).setValues([["最近拼字", "拼錯次數"]]);
+}
+
+// Spelling practice result: O = latest result (對/錯), P = number of misses. Never touches familiarity.
+function setSpell_(req) {
+  const ws = SpreadsheetApp.getActive().getSheetByName(SHEET_WORDS);
+  const row = Number(req.row);
+  if (!(row >= 2 && row <= ws.getLastRow())) return { ok: false, error: "not_found" };
+  if (String(ws.getRange(row, 3).getValue()) !== req.w) return { ok: false, error: "not_found" };
+  ensureSpellCols_(ws);
+  const miss = (Number(ws.getRange(row, 16).getValue()) || 0) + (req.ok ? 0 : 1);
+  ws.getRange(row, 15, 1, 2).setValues([[req.ok ? "對" : "錯", miss]]);
+  return { ok: true };
 }
 
 function addLog_(req) {

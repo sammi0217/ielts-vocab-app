@@ -30,6 +30,16 @@ test("fam with a mismatched word is not_found", async () => {
   assert.deepEqual(r, { ok: false, error: "not_found" });
 });
 
+test("spell records the latest result and counts misses once per opId", async () => {
+  const f = createMockFetch(seed);
+  const op = { op: "spell", token: "mock", opId: "s1", row: 2, w: "apple", ok: false };
+  assert.deepEqual(await post(f, op), { ok: true });
+  assert.deepEqual(await post(f, op), { ok: true, dup: true });
+  await post(f, { ...op, opId: "s2", ok: true });
+  const r = await post(f, { op: "get", token: "mock" });
+  assert.deepEqual([r.words[0].spell, r.words[0].miss], ["對", 1]);
+});
+
 test("done appends to the log", async () => {
   const f = createMockFetch(seed);
   await post(f, { op: "done", token: "mock", opId: "c", round: 1, portion: 1, date: "2026-09-23", words: 47, minutes: 9, note: "" });

@@ -22,7 +22,7 @@
   color-scheme:dark;
   --bg:#141413; --surface:#222220; --surface-2:#2C2C29; --line:#3A3A36;
   --ink:#F3F3EC; --muted:#8E8E86; --on-accent:#141413;
-  --lime:#E2F46A; --lime-2:#ECF8A8; --lime-3:#F6FBDD; --paper:#FAFAF4;
+  --lime:#E2F46A; --lime-2:#ECF8A8; --lime-3:#F6FBDD; --paper:#FAFAF4; --bad:#FF8373;
   --f0:#3A3A36; --f0-ink:#C9C9C0;
   --f1:var(--lime-3); --f2:var(--lime-2); --f3:var(--lime); --f-ink:var(--on-accent);
   --grad:linear-gradient(135deg,var(--paper) 0%,var(--lime-3) 38%,var(--lime) 100%);
@@ -203,6 +203,58 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--lime);color:var(--on-accent);font-weight:600;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;white-space:nowrap}
 .toast.show{opacity:1}
 
+/* example-sentence audio */
+.ex{display:flex;gap:10px;align-items:flex-start}
+.ex > div,.ex-row > div{flex:1;min-width:0}
+.ex-row{display:flex;gap:10px;align-items:flex-start}
+.say{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--lime);font-size:16px}
+.face.back .say{background:rgba(20,20,19,.08);color:var(--on-accent)}
+
+/* copy-typing under the rating buttons */
+.copy{background:var(--surface);border-radius:20px;padding:12px 14px 14px;margin-bottom:12px}
+.copy-marks{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:.05em;min-height:30px;word-break:break-all;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.copy-marks span{white-space:pre}
+.lt-ok{color:var(--lime)} .lt-bad{color:var(--bad);text-decoration:underline} .lt-todo{color:#55554F}
+.lt-miss{color:var(--bad);opacity:.55;text-decoration:underline dotted} .lt-extra{color:var(--bad);text-decoration:line-through;opacity:.7}
+.copy-ok{color:var(--lime);font-size:18px;display:none}
+.copy.done .copy-ok{display:inline-flex}
+.copy input{width:100%;background:var(--bg);font-size:16px}
+
+/* dictation */
+.sp-card{background:var(--surface);border-radius:var(--r) var(--r) 44px var(--r);padding:26px 20px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:12px}
+.sp-say{width:84px;height:84px;border-radius:50%;background:var(--lime);color:var(--on-accent);font-size:34px;display:grid;place-items:center;box-shadow:0 0 0 8px rgba(226,244,106,.12)}
+.sp-hint{min-height:22px;text-align:center;color:var(--muted);font-size:14px;line-height:1.5}
+.sp-hint b{color:var(--ink);font-size:17px}
+.sp-hint code{display:block;margin-top:4px;font-family:var(--display);font-size:18px;letter-spacing:.08em;color:var(--lime);white-space:pre}
+.sp-in{width:100%;font-family:var(--display);font-size:22px !important;text-align:center;border-radius:16px;min-height:56px;background:var(--bg)}
+.sp-result{min-height:54px;text-align:center}
+.marks{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:.04em;word-break:break-all}
+.marks span{white-space:pre}
+.sp-answer{margin-top:4px;color:var(--muted);font-size:14px}
+.sp-answer b{color:var(--ink);font-family:var(--display);font-size:17px;margin-right:6px}
+.sp-verdict{font-weight:700;margin-bottom:2px}
+.sp-verdict.good{color:var(--lime)} .sp-verdict.nope{color:var(--bad)}
+.sp-actions{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+.sp-days{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+.sp-day{background:var(--surface-2);border-radius:18px;padding:12px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;min-height:76px}
+.sp-day small{color:var(--muted);font-size:12px}
+.sp-day b{font-size:15px;font-weight:700}
+.sp-day.is-today{background:var(--lime);color:var(--on-accent)}
+.sp-day.is-today small{color:rgba(20,20,19,.6)}
+.sp-list{display:flex;flex-direction:column;gap:8px;margin:12px 0 14px}
+.sp-row{display:flex;align-items:baseline;gap:8px;font-size:14px}
+.sp-row b{font-family:var(--display);font-size:16px}
+.sp-row span{color:var(--muted);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-row em{font-style:normal;color:var(--bad);font-size:12px;white-space:nowrap}
+.box .btn.primary{width:100%}
+.done-card .sp-list{text-align:left;margin:4px 0 12px}
+.done-card .sp-row span{color:rgba(20,20,19,.6)}
+.done-card .sp-row em{color:#B3261E}
+.hero-btns{display:flex;gap:8px}
+.hero .btn.ghost{background:transparent;border:1.5px solid rgba(20,20,19,.35);color:var(--on-accent);font-weight:700}
+.switch{display:flex;align-items:center;gap:10px}
+.switch input{width:22px;height:22px;min-height:0;accent-color:var(--lime)}
+
 /* launch splash: the icon's grid lights up cell by cell, then fades into the app */
 #splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s ease}
 #splash.out{opacity:0;pointer-events:none}
@@ -262,6 +314,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tabHome" aria-selected="true">首頁</button>
       <button class="tab" role="tab" id="tabList" aria-selected="false">篩選列表</button>
+      <button class="tab" role="tab" id="tabSpell" aria-selected="false">拼字</button>
     </div>
 
     <section id="viewHome">
@@ -271,7 +324,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
         <div class="hero-top"><span id="hLabel"></span></div>
         <div class="hero-num num"><b id="hNum"></b><span id="hDen"></span><small>已評</small></div>
         <div class="hbar"><i id="hBar"></i></div>
-        <button class="btn primary" id="btnStart"></button>
+        <div class="hero-btns"><button class="btn primary" id="btnStart"></button><button class="btn ghost" id="btnSpell">拼字</button></div>
       </div>
       <div class="box box-streak">
         <div class="kpi"><small>連續完成</small><div><b class="num" id="sStreak"></b><span>天</span></div></div>
@@ -284,6 +337,19 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
         <div class="fam-bars" id="famBars"></div>
       </div>
       <div class="home-foot"><span></span><span class="sync" id="syncHome"></span></div>
+    </section>
+
+    <section id="viewSpellHome" class="hidden">
+      <div class="box box-streak">
+        <div class="kpi"><small>聽寫</small></div>
+        <div class="hint">選一份，聽發音拼出單字。拼錯的字會記下來，不影響熟悉度。</div>
+        <div class="sp-days" id="spDays"></div>
+      </div>
+      <div class="box box-fam">
+        <div class="kpi"><small>拼錯清單</small><div><b class="num" id="spWrongCount"></b><span>字</span></div></div>
+        <div class="sp-list" id="spWrongList"></div>
+        <button class="btn primary" id="spWrongGo"></button>
+      </div>
     </section>
 
     <section id="viewList" class="hidden">
@@ -320,14 +386,14 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
               <div class="word" id="fWord"></div>
               <div class="pos" id="fPos"></div>
               <button class="speak" id="btnSpeak" type="button"><span data-icon="sound"></span>念一次</button>
-              <div class="ex" id="fEx"></div>
+              <div class="ex"><div id="fEx"></div><button class="say" id="btnSayF" type="button" aria-label="念例句"><span data-icon="sound"></span></button></div>
               <div class="ex-zh" id="fExZh"></div>
             </div>
             <div class="face back">
               <div class="meta"><span class="cat" id="bWord"></span></div>
               <div class="zh" id="bZh"></div>
               <div class="def" id="bDef"></div>
-              <div class="bex"><span>例句</span><div id="bEx"></div><div class="ex-zh" id="bExZh"></div></div>
+              <div class="bex"><span>例句</span><div class="ex-row"><div id="bEx"></div><button class="say" id="btnSayB" type="button" aria-label="念例句"><span data-icon="sound"></span></button></div><div class="ex-zh" id="bExZh"></div></div>
               <div class="pairs">
                 <div><span>同義詞</span><div id="bSyn"></div></div>
                 <div><span>反義詞</span><div id="bAnt"></div></div>
@@ -341,6 +407,10 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
         <button class="r1" data-f="1">學習中</button>
         <button class="r2" data-f="2">熟悉</button>
         <button class="r3" data-f="3">已掌握</button>
+      </div>
+      <div class="copy" id="copyBox">
+        <div class="copy-marks"><span id="copyMarks" aria-hidden="true"></span><span class="copy-ok" id="copyOk"></span></div>
+        <input id="copyIn" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="照著打一遍" aria-label="照著打一遍">
       </div>
       <div class="nav">
         <button class="btn" id="btnPrev">上一張</button>
@@ -356,7 +426,36 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
         <p id="dSub"></p>
         <button class="btn primary" id="btnMark"></button>
         <button class="btn" id="btnJump"></button>
+        <button class="btn" id="btnSpellDone">接著拼這份</button>
         <button class="btn" id="btnDoneBack">← 回到最後一張</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== dictation ===== -->
+  <section id="viewSpell" class="hidden">
+    <div class="cards-top">
+      <button class="btn" id="spBack"><span data-icon="back"></span>&nbsp;返回</button>
+      <b id="spTitle"></b>
+      <span class="sync" id="syncSpell"></span>
+    </div>
+    <div class="cbar"><i id="spBar"></i></div>
+    <div id="spAsk">
+      <div class="sp-card">
+        <button class="sp-say" id="spSay" type="button" aria-label="再聽一次"><span data-icon="sound"></span></button>
+        <div class="sp-hint" id="spHint">聽發音，拼出這個字</div>
+        <input class="sp-in" id="spIn" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="拼字">
+        <div class="sp-result" id="spResult"></div>
+      </div>
+      <div class="sp-actions"><button class="btn" id="spHintBtn">提示</button><button class="btn primary" id="spGo">送出</button></div>
+    </div>
+    <div id="spDone" class="hidden">
+      <div class="done-card">
+        <h2 id="spDTitle"></h2>
+        <p id="spDSub"></p>
+        <div class="sp-list" id="spDList"></div>
+        <button class="btn primary" id="spRetry"></button>
+        <button class="btn" id="spExit">回去</button>
       </div>
     </div>
   </section>
@@ -368,6 +467,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
     <h2>設定</h2>
     <div class="opt"><span>同步狀態</span><span class="sync" id="syncSettings"></span><button class="btn" id="btnRetry">重新同步</button></div>
     <div class="opt"><input id="tokenIn" type="password" autocomplete="off" placeholder="同步碼" aria-label="同步碼"><button class="btn" id="btnSaveToken">更新</button></div>
+    <div class="opt"><span>聽寫時自動念</span><label class="switch"><input type="checkbox" id="autoSay"></label></div>
     <div class="opt"><span>發音口音</span>
       <select id="accentSel"><option value="en-GB">英式 (UK)</option><option value="en-US">美式 (US)</option></select>
     </div>

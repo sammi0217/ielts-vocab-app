@@ -161,3 +161,47 @@ test("heatmap: Monday-first weeks anchored at the start week, with day states", 
   assert.equal(late[1][0].date, "2026-12-28");
   assert.equal(late[0][0].date, "2026-12-21");
 });
+
+test("spellTarget strips parentheses, case, hyphens and extra spaces", () => {
+  assert.equal(L.spellTarget("artificial intelligence (AI)"), "artificial intelligence");
+  assert.equal(L.spellTarget("Long-Term  Memory "), "long term memory");
+  assert.equal(L.spellTarget("wind turbine"), "wind turbine");
+});
+
+test("checkSpelling: exact, case/hyphen tolerant, and per-letter marks", () => {
+  assert.equal(L.checkSpelling("long-term memory", "LONG TERM memory").ok, true);
+  assert.equal(L.checkSpelling("artificial intelligence (AI)", "artificial intelligence").ok, true);
+  const sub = L.checkSpelling("cat", "cut");
+  assert.equal(sub.ok, false);
+  assert.deepEqual(sub.marks, [{ ch: "c", t: "ok" }, { ch: "a", t: "bad" }, { ch: "t", t: "ok" }]);
+  const miss = L.checkSpelling("apple", "aple");
+  assert.deepEqual(miss.marks.filter(m => m.t !== "ok"), [{ ch: "p", t: "miss" }]);
+  assert.equal(miss.marks.map(m => m.ch).join(""), "apple");
+  const extra = L.checkSpelling("cat", "caat");
+  assert.deepEqual(extra.marks.map(m => m.t).filter(t => t !== "ok"), ["extra"]);
+  assert.equal(L.checkSpelling("cat", "").ok, false);
+});
+
+test("typeProgress marks typed letters against the target as you type", () => {
+  const p = L.typeProgress("long-term", "long t");
+  assert.deepEqual(p.marks.map(m => m.t), ["ok", "ok", "ok", "ok", "ok", "ok", "todo", "todo", "todo"]);
+  assert.equal(p.complete, false);
+  const bad = L.typeProgress("cat", "cx");
+  assert.deepEqual(bad.marks.map(m => m.t), ["ok", "bad", "todo"]);
+  assert.equal(L.typeProgress("Cat", "cat").complete, true);
+  assert.equal(L.typeProgress("artificial intelligence (AI)", "artificial intelligence").complete, true);
+});
+
+test("hintPattern shows the first letter and the length", () => {
+  assert.equal(L.hintPattern("apple"), "a _ _ _ _");
+  assert.equal(L.hintPattern("wind turbine"), "w _ _ _   _ _ _ _ _ _ _");
+});
+
+test("applyOps records spelling results", () => {
+  const data = { words: [{ row: 2, w: "a", fam: 1, date: "", cnt: 0, spell: "", miss: 0 }], log: [] };
+  const bad = L.applyOps(data, [{ op: "spell", row: 2, w: "a", ok: false }]);
+  assert.deepEqual([bad.words[0].spell, bad.words[0].miss], ["錯", 1]);
+  const good = L.applyOps(bad, [{ op: "spell", row: 2, w: "a", ok: true }]);
+  assert.deepEqual([good.words[0].spell, good.words[0].miss], ["對", 1]);
+  assert.equal(data.words[0].spell, "");
+});

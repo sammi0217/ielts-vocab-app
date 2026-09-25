@@ -18,6 +18,14 @@ export function createMockFetch(seed, token = "mock") {
       seen.add(req.opId);
       return reply({ ok: true, cnt: w.cnt });
     }
+    if (req.op === "spell") {
+      const w = data.words.find(x => x.row === req.row);
+      if (!w || w.w !== req.w) return reply({ ok: false, error: "not_found" });
+      w.spell = req.ok ? "對" : "錯";
+      if (!req.ok) w.miss = (w.miss || 0) + 1;
+      seen.add(req.opId);
+      return reply({ ok: true });
+    }
     if (req.op === "done") {
       data.log.push({ round: req.round, portion: req.portion, date: req.date, words: req.words, minutes: req.minutes, note: req.note || "" });
       seen.add(req.opId);

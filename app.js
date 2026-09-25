@@ -1,7 +1,7 @@
 import {
   FAM, PORTION_SIZES, ymd, addDays, fmtMD, fmtMDW, schedule, portionDate, portionStatus,
   canMarkDone, isDone, portionIndices, buildIcs, ratedSince, isRated,
-  roundDates, streak, famCounts, heatmap,
+  roundDates, streak, famCounts, heatmap, spellTarget, checkSpelling, typeProgress, hintPattern,
 } from "./logic.js";
 import { icon } from "./icons.js";
 import { createSync } from "./sync.js";
@@ -18,11 +18,12 @@ const storage = {
   get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
 };
-const prefs = storage.get("iv_prefs") || { accent: "en-GB" };
+const prefs = { accent: "en-GB", autoSay: true, ...(storage.get("iv_prefs") || {}) };
 let token = MOCK ? "mock" : storage.get("iv_token") || "";
 let data = { words: [], log: [] };
 let sess = null; // current card session
 let listRows = [];
+let sp = null;   // current dictation session
 
 let fetchFn = (...a) => fetch(...a);
 if (MOCK) fetchFn = createMockFetch(await (await fetch("mock/data.json")).json());
@@ -52,7 +53,7 @@ function renderSync(s = sync.status()) {
     : s.pending ? ["sync", `${s.pending} 筆未同步`]
     : s.state === "offline" ? ["warning", "離線"]
     : ["check", "已同步"];
-  ["syncHome", "syncCards", "syncSettings"].forEach(id => { $(id).innerHTML = icon(ic) + t; });
+  ["syncHome", "syncCards", "syncSpell", "syncSettings"].forEach(id => { $(id).innerHTML = icon(ic) + t; });
 }
 
 /* ===== launch splash ===== */
@@ -86,7 +87,8 @@ function showMain() {
   if (sess) { renderCard(); return; }
   $("main").classList.remove("hidden");
   renderHome();
-  if (!$("viewList").classList.contains("hidden")) renderList();
+  if (curTab === "list") renderList();
+  if (curTab === "spell") renderSpellHome();
   hideSplash();
 }
 async function boot() {
@@ -112,15 +114,19 @@ $("btnSetup").onclick = () => {
 };
 
 /* ===== tabs ===== */
+const TABS = { home: ["tabHome", "viewHome"], list: ["tabList", "viewList"], spell: ["tabSpell", "viewSpellHome"] };
+let curTab = "home";
 function showTab(t) {
-  $("tabHome").setAttribute("aria-selected", t === "home");
-  $("tabList").setAttribute("aria-selected", t === "list");
-  $("viewHome").classList.toggle("hidden", t !== "home");
-  $("viewList").classList.toggle("hidden", t !== "list");
-  if (t === "list") renderList(); else renderHome();
+  curTab = t;
+  for (const [k, [tab, view]] of Object.entries(TABS)) {
+    $(tab).setAttribute("aria-selected", k === t);
+    $(view).classList.toggle("hidden", k !== t);
+  }
+  if (t === "list") renderList(); else if (t === "spell") renderSpellHome(); else renderHome();
 }
 $("tabHome").onclick = () => showTab("home");
 $("tabList").onclick = () => showTab("list");
+$("tabSpell").onclick = () => showTab("spell");
 
 /* ===== home ===== */
 let selDay = null;        // date picked in the week strip (null = today)
@@ -152,6 +158,7 @@ function renderHome() {
   $("hBar").style.width = n ? Math.round((done / n) * 100) + "%" : "0";
   $("btnStart").innerHTML = st === "done" ? "再看一次" : done ? "繼續 →" : "開始 →";
   $("btnStart").onclick = () => startPortion(s.round, k);
+  $("btnSpell").onclick = () => openSpell(deck, `第 ${k} 份`);
 
   $("sStreak").textContent = streak(log, t);
   renderHeat(t);
@@ -227,15 +234,28 @@ function renderCard() {
   $("bSyn").textContent = w.syn || "—";
   $("bAnt").textContent = w.ant && w.ant !== "-" ? w.ant : "—";
   $("posInd").textContent = `${sess.pos + 1} / ${n}`;
+  if (sess.copyFor !== i) { sess.copyFor = i; $("copyIn").value = ""; renderCopy(); }
   $("btnPrev").disabled = sess.pos === 0;
   // a button is filled only when this word was rated during this round
   const touched = !!w.date && w.date >= sess.since;
   document.querySelectorAll("#rate button").forEach(b => b.classList.toggle("on", touched && +b.dataset.f === w.fam));
 }
+/* copy-typing: practice only, nothing is recorded */
+function renderCopy() {
+  if (!sess || sess.pos >= sess.deck.length) return;
+  const p = typeProgress(data.words[sess.deck[sess.pos]].w, $("copyIn").value);
+  $("copyMarks").innerHTML = p.marks.map(m => `<span class="lt-${m.t}">${esc(m.ch)}</span>`).join("");
+  $("copyOk").innerHTML = icon("rated");
+  $("copyBox").classList.toggle("done", p.complete);
+}
+$("copyIn").addEventListener("input", renderCopy);
+$("copyIn").addEventListener("keydown", e => { if (e.key === "Enter") e.target.blur(); });
+
 function renderDone() {
   const n = sess.all.length, left = unrated().length, done = n - left;
   const mins = Math.max(1, Math.round((Date.now() - sess.startedAt) / 60000));
   const b = $("btnMark"), jump = $("btnJump");
+  $("btnSpellDone").classList.toggle("hidden", !(sess.mode === "portion" && isDone(data.log, sess.round, sess.portion)));
   b.disabled = false;
   jump.classList.toggle("hidden", !left);
   jump.textContent = `只看沒評的 ${left} 張`;
@@ -262,7 +282,7 @@ function renderDone() {
       data.log.push(entry);
       sync.enqueue({ op: "done", ...entry });
       toast(`第 ${portion} 份已記錄`);
-      closeDeck();
+      renderDone(); // stay: offer 接著拼這份
     };
   }
 }
@@ -302,6 +322,7 @@ $("btnPrev").onclick = () => go(-1);
 $("btnNext").onclick = () => go(1);
 $("btnBack").onclick = closeDeck;
 $("btnDoneBack").onclick = () => go(-1);
+$("btnSpellDone").onclick = () => { const deck = sess.all.slice(), title = sess.title; closeDeck(); openSpell(deck, title); };
 // review mode: walk only the cards still unrated (incl. ones marked 未學習); rated ones are skipped
 $("btnJump").onclick = () => {
   const rest = unrated();
@@ -327,16 +348,117 @@ if ("speechSynthesis" in window) {
 } else {
   $("btnSpeak").classList.add("hidden");
 }
-function speak(text) {
+function speak(text, rate = 0.92) {
   if (!("speechSynthesis" in window)) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = prefs.accent; u.rate = 0.92;
+  u.lang = prefs.accent; u.rate = rate;
   const pick = voices.find(v => v.lang.replace("_", "-") === prefs.accent) || voices.find(v => v.lang.startsWith("en"));
   if (pick) u.voice = pick;
   speechSynthesis.speak(u);
 }
-$("btnSpeak").onclick = e => { e.stopPropagation(); if (sess && sess.pos < sess.deck.length) speak(data.words[sess.deck[sess.pos]].w); };
+const curWord = () => (sess && sess.pos < sess.deck.length ? data.words[sess.deck[sess.pos]] : null);
+$("btnSpeak").onclick = e => { e.stopPropagation(); const w = curWord(); if (w) speak(w.w); };
+["btnSayF", "btnSayB"].forEach(id => { $(id).onclick = e => { e.stopPropagation(); const w = curWord(); if (w && w.ex) speak(w.ex, 0.88); }; });
+if (!("speechSynthesis" in window)) ["btnSayF", "btnSayB"].forEach(id => $(id).classList.add("hidden"));
+
+/* ===== spelling: tab ===== */
+const wrongWords = () => data.words.map((w, i) => i).filter(i => data.words[i].spell === "錯")
+  .sort((a, b) => (data.words[b].miss || 0) - (data.words[a].miss || 0));
+function renderSpellHome() {
+  const t = today(), dates = roundDates(t);
+  $("spDays").innerHTML = dates.map((d, i) =>
+    `<button class="sp-day${d === t ? " is-today" : ""}" data-k="${i + 1}"><small>${wd(d)} ${fmtMD(d)}</small><b>第 ${i + 1} 份</b></button>`).join("");
+  $("spDays").querySelectorAll(".sp-day").forEach(b => {
+    b.onclick = () => openSpell(portionIndices(+b.dataset.k).filter(i => i < data.words.length), `第 ${b.dataset.k} 份`);
+  });
+  const wrong = wrongWords();
+  $("spWrongCount").textContent = wrong.length;
+  $("spWrongList").innerHTML = wrong.length
+    ? wrong.slice(0, 8).map(i => spRow(data.words[i], `錯 ${data.words[i].miss || 1} 次`)).join("") + (wrong.length > 8 ? `<div class="hint">還有 ${wrong.length - 8} 個…</div>` : "")
+    : '<div class="hint">目前沒有拼錯的字。</div>';
+  $("spWrongGo").textContent = `練這 ${wrong.length} 個`;
+  $("spWrongGo").classList.toggle("hidden", !wrong.length);
+  $("spWrongGo").onclick = () => openSpell(wrong, "拼錯清單");
+}
+const spRow = (w, note) => `<div class="sp-row"><b>${esc(spellTarget(w.w))}</b><span>${esc(w.zh)}</span>${note ? `<em>${note}</em>` : ""}</div>`;
+
+/* ===== spelling: dictation session ===== */
+function openSpell(deck, title) {
+  if (!deck.length) { toast("沒有可以練的字"); return; }
+  sp = { deck: deck.slice(), title, pos: 0, hint: 0, stage: "ask", wrong: [], last: null };
+  $("main").classList.add("hidden");
+  $("viewCards").classList.add("hidden");
+  $("viewSpell").classList.remove("hidden");
+  window.scrollTo(0, 0);
+  renderSpell();
+  askWord();
+}
+function closeSpell() {
+  sp = null;
+  window.speechSynthesis?.cancel();
+  $("viewSpell").classList.add("hidden");
+  $("main").classList.remove("hidden");
+  showTab(curTab);
+}
+function askWord() {
+  const w = data.words[sp.deck[sp.pos]];
+  $("spIn").value = "";
+  $("spIn").focus();
+  if (prefs.autoSay) speak(w.w, 0.85);
+}
+function renderSpell() {
+  const n = sp.deck.length, end = sp.pos >= n;
+  $("spTitle").textContent = `${sp.title} · ${Math.min(sp.pos + 1, n)} / ${n}`;
+  $("spBar").style.width = Math.round((Math.min(sp.pos + (sp.stage === "result" ? 1 : 0), n) / n) * 100) + "%";
+  $("spAsk").classList.toggle("hidden", end);
+  $("spDone").classList.toggle("hidden", !end);
+  if (end) return renderSpellDone();
+  const w = data.words[sp.deck[sp.pos]];
+  $("spHint").innerHTML = sp.hint === 0 ? "聽發音，拼出這個字"
+    : `<b>${esc(w.zh)}</b>　${esc(w.pos)}` + (sp.hint > 1 ? `<code>${esc(hintPattern(w.w))}</code>` : "");
+  $("spHintBtn").disabled = sp.hint > 1 || sp.stage === "result";
+  $("spGo").textContent = sp.stage === "result" ? "下一題 →" : "送出";
+  if (sp.stage !== "result") { $("spResult").innerHTML = ""; return; }
+  const r = sp.last;
+  $("spResult").innerHTML = `<div class="sp-verdict ${r.ok ? "good" : "nope"}">${r.ok ? "拼對了" : "再看一次"}</div>` +
+    (r.ok ? "" : `<div class="marks">${r.marks.map(m => `<span class="lt-${m.t}">${esc(m.ch)}</span>`).join("")}</div>`) +
+    `<div class="sp-answer"><b>${esc(spellTarget(w.w))}</b>${esc(w.zh)}</div>`;
+}
+function renderSpellDone() {
+  const n = sp.deck.length, wrong = sp.wrong;
+  $("spDTitle").textContent = wrong.length ? "拼完了" : "全部拼對！";
+  $("spDSub").textContent = `共 ${n} 個 · 拼錯 ${wrong.length} 個`;
+  $("spDList").innerHTML = wrong.map(i => spRow(data.words[i])).join("");
+  $("spRetry").textContent = `只練拼錯的 ${wrong.length} 個`;
+  $("spRetry").classList.toggle("hidden", !wrong.length);
+}
+function spSubmit() {
+  if (!sp || sp.pos >= sp.deck.length) return;
+  if (sp.stage === "result") {
+    Object.assign(sp, { pos: sp.pos + 1, hint: 0, stage: "ask", last: null });
+    renderSpell();
+    if (sp.pos < sp.deck.length) askWord();
+    return;
+  }
+  const val = $("spIn").value;
+  if (!val.trim()) return;
+  const i = sp.deck[sp.pos], w = data.words[i], r = checkSpelling(w.w, val);
+  // record the first attempt per word; familiarity is never touched
+  w.spell = r.ok ? "對" : "錯";
+  if (!r.ok) { w.miss = (w.miss || 0) + 1; sp.wrong.push(i); }
+  sync.enqueue({ op: "spell", row: w.row, w: w.w, ok: r.ok });
+  Object.assign(sp, { stage: "result", last: r });
+  renderSpell();
+}
+$("spGo").onclick = spSubmit;
+$("spIn").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); spSubmit(); } });
+$("spIn").addEventListener("input", () => { if (sp && sp.stage === "result") $("spIn").value = ""; });
+$("spSay").onclick = () => { if (sp && sp.pos < sp.deck.length) { speak(data.words[sp.deck[sp.pos]].w, 0.85); $("spIn").focus(); } };
+$("spHintBtn").onclick = () => { if (!sp) return; sp.hint = Math.min(2, sp.hint + 1); renderSpell(); $("spIn").focus(); };
+$("spBack").onclick = closeSpell;
+$("spExit").onclick = closeSpell;
+$("spRetry").onclick = () => { const t = sp.title; openSpell(sp.wrong, `${t} · 重練`); };
 
 /* ===== list ===== */
 function buildCatSel() {
@@ -375,6 +497,7 @@ $("btnFilterDeck").onclick = () => openDeck({ mode: "filter", deck: listRows.sli
 $("btnSettings").onclick = () => {
   $("tokenIn").value = MOCK ? "" : token;
   $("accentSel").value = prefs.accent;
+  $("autoSay").checked = prefs.autoSay;
   $("exportStatus").textContent = "";
   renderSync();
   $("sheet").classList.add("open");
@@ -382,6 +505,7 @@ $("btnSettings").onclick = () => {
 $("btnClose").onclick = () => $("sheet").classList.remove("open");
 $("sheet").addEventListener("click", e => { if (e.target === $("sheet")) $("sheet").classList.remove("open"); });
 $("accentSel").onchange = () => { prefs.accent = $("accentSel").value; storage.set("iv_prefs", prefs); };
+$("autoSay").onchange = () => { prefs.autoSay = $("autoSay").checked; storage.set("iv_prefs", prefs); };
 $("btnSaveToken").onclick = () => {
   const v = $("tokenIn").value.trim();
   if (!v || MOCK) return;

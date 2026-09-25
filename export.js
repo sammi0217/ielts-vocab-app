@@ -34,22 +34,22 @@ export async function exportExcel({ words, log }) {
 
   /* --- 單字庫 --- */
   const ws = wb.addWorksheet("單字庫", { views: [{ state: "frozen", xSplit: 2, ySplit: 1 }] });
-  hdrRow(ws, 1, ["編號", "分類", "單字", "詞性", "中文解釋", "英文解釋", "例句 (IELTS 7.0)", "例句中文", "同義詞", "反義詞", "熟悉度", "上次複習日期", "複習次數", "備註"]);
-  ws.columns = [6, 14, 22, 8, 16, 38, 42, 34, 22, 20, 10, 14, 10, 20].map(width => ({ width }));
+  hdrRow(ws, 1, ["編號", "分類", "單字", "詞性", "中文解釋", "英文解釋", "例句 (IELTS 7.0)", "例句中文", "同義詞", "反義詞", "熟悉度", "上次複習日期", "複習次數", "備註", "最近拼字", "拼錯次數"]);
+  ws.columns = [6, 14, 22, 8, 16, 38, 42, 34, 22, 20, 10, 14, 10, 20, 10, 10].map(width => ({ width }));
   words.forEach((w, i) => {
     const r = ws.getRow(i + 2);
-    const vals = [i + 1, w.cat, w.w, w.pos, w.zh, w.en, w.ex, w.exzh, w.syn, w.ant, FAM[w.fam], toDate(w.date), w.cnt || 0, w.note || null];
+    const vals = [i + 1, w.cat, w.w, w.pos, w.zh, w.en, w.ex, w.exzh, w.syn, w.ant, FAM[w.fam], toDate(w.date), w.cnt || 0, w.note || null, w.spell || null, w.miss || 0];
     vals.forEach((v, k) => {
       const c = r.getCell(k + 1);
       c.value = v; c.font = { name: "Arial", size: 10 }; c.border = BORDER;
       if ([5, 6, 7, 8].includes(k + 1)) c.alignment = { wrapText: true, vertical: "top" };
-      else if ([1, 4, 11, 13].includes(k + 1)) c.alignment = { horizontal: "center", vertical: "top" };
+      else if ([1, 4, 11, 13, 15, 16].includes(k + 1)) c.alignment = { horizontal: "center", vertical: "top" };
       else c.alignment = { vertical: "top", wrapText: true };
       if (k + 1 === 12) c.numFmt = "yyyy-mm-dd";
     });
   });
   const last = words.length + 1, rng = `K2:K${last + 500}`;
-  ws.autoFilter = `A1:N${last}`;
+  ws.autoFilter = `A1:P${last}`;
   ws.dataValidations.add(rng, { type: "list", allowBlank: true, formulae: ['"未學習,學習中,熟悉,已掌握"'], showErrorMessage: true, errorTitle: "輸入錯誤", error: "請從清單選擇：未學習／學習中／熟悉／已掌握" });
   const fill = a => ({ type: "pattern", pattern: "solid", bgColor: { argb: a } });
   ws.addConditionalFormatting({ ref: rng, rules: [

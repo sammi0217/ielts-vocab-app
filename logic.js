@@ -88,6 +88,9 @@ export function applyOps(data, ops) {
     if (op.op === "fam") {
       const w = words.find(x => x.row === op.row && x.w === op.w);
       if (w) { w.fam = op.fam; w.date = op.date; w.cnt = (w.cnt || 0) + 1; }
+    } else if (op.op === "spell") {
+      const w = words.find(x => x.row === op.row && x.w === op.w);
+      if (w) { w.spell = op.ok ? "對" : "錯"; if (!op.ok) w.miss = (w.miss || 0) + 1; }
     } else if (op.op === "done") {
       log.push({ round: op.round, portion: op.portion, date: op.date, words: op.words, minutes: op.minutes, note: op.note || "" });
     }
@@ -129,6 +132,39 @@ export function famCounts(words) {
   const c = [0, 0, 0, 0];
   for (const w of words) c[w.fam] = (c[w.fam] || 0) + 1;
   return c;
+}
+
+/* ===== spelling ===== */
+// Answer key: drop "(AI)"-style parentheses, ignore case, treat hyphens as spaces, collapse spaces.
+const loose = s => String(s).replace(/-/g, " ").toLowerCase().replace(/\s+/g, " ").trim();
+export function spellTarget(word) {
+  return loose(String(word).replace(/\([^)]*\)/g, " "));
+}
+// Per-letter marks from an edit-distance alignment: ok / bad (wrong letter) / miss (left out) / extra (typed too much).
+export function checkSpelling(word, input) {
+  const a = spellTarget(word), b = loose(input), n = a.length, m = b.length;
+  const dp = Array.from({ length: n + 1 }, (_, i) => Array.from({ length: m + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)));
+  for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++)
+    dp[i][j] = Math.min(dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1), dp[i - 1][j] + 1, dp[i][j - 1] + 1);
+  const marks = [];
+  let i = n, j = m;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && a[i - 1] === b[j - 1] && dp[i][j] === dp[i - 1][j - 1]) { marks.push({ ch: a[--i], t: "ok" }); j--; }
+    else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) { marks.push({ ch: a[--i], t: "bad" }); j--; }
+    else if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) marks.push({ ch: a[--i], t: "miss" });
+    else marks.push({ ch: b[--j], t: "extra" });
+  }
+  return { ok: a === b, marks: marks.reverse(), target: a };
+}
+// Live feedback while copying a word: each target letter is ok / bad / todo by position.
+export function typeProgress(word, input) {
+  const target = spellTarget(word), typed = String(input).replace(/-/g, " ").toLowerCase();
+  const marks = [...target].map((ch, i) => ({ ch, t: i >= typed.length ? "todo" : typed[i] === ch ? "ok" : "bad" }));
+  return { marks, complete: loose(typed) === target };
+}
+export function hintPattern(word) {
+  return spellTarget(word).split(" ")
+    .map((part, wi) => [...part].map((c, ci) => (wi === 0 && ci === 0 ? c : "_")).join(" ")).join("   ");
 }
 
 /* ===== swipe ===== */
