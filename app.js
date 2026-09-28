@@ -498,6 +498,7 @@ $("btnSettings").onclick = () => {
   $("tokenIn").value = MOCK ? "" : token;
   $("accentSel").value = prefs.accent;
   $("autoSay").checked = prefs.autoSay;
+  $("vpSize").textContent = `${innerWidth} × ${innerHeight}`;
   $("exportStatus").textContent = "";
   renderSync();
   $("sheet").classList.add("open");

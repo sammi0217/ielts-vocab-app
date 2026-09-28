@@ -285,6 +285,72 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
   .zh{font-size:22px}
   .rate button{font-size:13px;padding:10px 2px;min-height:48px}
 }
+
+/* ===== cover-screen mode (e.g. Galaxy Z Flip folded: ~360×374, near-square, very short) =====
+   Only screens that are BOTH short and narrow match; unfolded phones and desktops are untouched. */
+@media (max-height:480px) and (max-width:480px){
+  .wrap{padding:6px 10px 8px}
+  /* header + tabs */
+  .top{padding:0 0 2px}
+  .brand{font-size:16px}
+  .brand small{display:none}
+  .icon-btn{width:32px;height:32px;font-size:15px}
+  .tabs{margin:4px 0 8px;padding:3px}
+  .tab{padding:4px 10px;font-size:13px}
+  /* home: week strip + hero shrink to one screen; stats scroll below */
+  .week{gap:2px;margin-bottom:6px}
+  .day{padding:2px 0 4px;gap:0}
+  .day small{font-size:10px}
+  .day b{font-size:13px;width:26px;height:26px}
+  .day i{width:4px;height:4px}
+  .hero{padding:10px 12px 12px;border-radius:18px 18px 40px 18px;margin-bottom:8px}
+  .hero-no{font-size:64px;top:-8px;right:10px}
+  .hero-top{font-size:12px}
+  .hero-num{margin:4px 0 6px}
+  .hero-num b{font-size:30px}
+  .hero-num span{font-size:15px}
+  .hero-num small{font-size:11px}
+  .hbar{height:8px;margin-bottom:8px}
+  .hero-btns .btn{min-height:34px;padding:6px 12px;font-size:13px}
+  .box{padding:10px 12px 12px;margin-bottom:8px}
+  .kpi b{font-size:24px}
+  /* cards: fill the screen; the card takes whatever height is left, buttons stay pinned at the bottom */
+  #viewCards:not(.hidden){display:flex;flex-direction:column;height:calc(100vh - 14px);height:calc(100dvh - 14px)}
+  .cards-top{padding:0 0 2px;gap:6px}
+  .cards-top .btn{min-height:30px;padding:3px 10px;font-size:12px}
+  .cards-top b{font-size:13px}
+  .cbar{height:4px;margin:4px 0 6px}
+  #cardArea{flex:1;min-height:0;display:flex;flex-direction:column}
+  .swipe{flex:1;min-height:0;margin-bottom:6px}
+  .stage,.card{height:100%;min-height:0}
+  .face{height:100%;min-height:0;padding:10px 12px 12px;border-radius:18px 18px 30px 18px;overflow:auto;box-shadow:none}
+  .face.back{border-radius:18px 18px 18px 30px}
+  .meta{font-size:11px}
+  .word{font-size:24px;margin:6px 0 2px}
+  .pos{font-size:12px}
+  .speak{margin-top:6px;padding:5px 10px;font-size:12px}
+  /* front shows only the word; the example sentence lives on the back */
+  .face.front .ex,.face.front .ex-zh{display:none}
+  .face.front{justify-content:center}
+  .face.front .meta{position:absolute;left:12px;right:12px;top:10px}
+  .zh{font-size:18px;margin:6px 0 2px}
+  .def{font-size:13px;line-height:1.45}
+  .bex{margin:8px 0 6px;padding-top:6px;font-size:12px}
+  .pairs{margin-top:8px;padding-top:6px;font-size:12px;gap:8px}
+  .say{width:26px;height:26px;font-size:12px}
+  .rate{gap:6px;margin-bottom:0}
+  .rate button{min-height:36px;padding:4px 2px;font-size:12px;border-radius:12px}
+  .copy,.nav,.kbd{display:none}
+  .done-card{padding:14px 14px 12px;border-radius:18px 18px 30px 18px}
+  .done-card h2{font-size:18px;margin-bottom:2px}
+  .done-card p{font-size:13px;margin-bottom:8px}
+  .done-card .btn{min-height:34px;padding:5px 12px;font-size:13px;margin-top:6px}
+  /* splash + setup */
+  .sgrid{grid-template-columns:repeat(3,34px);gap:7px}
+  .sgrid i{width:34px;height:34px;border-radius:9px}
+  .setup{margin-top:8px;padding:14px 14px 18px}
+  .setup h1{font-size:18px}
+}
 </style>
 </head>
 <body>
@@ -468,6 +534,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
     <h2>設定</h2>
     <div class="opt"><span>同步狀態</span><span class="sync" id="syncSettings"></span><button class="btn" id="btnRetry">重新同步</button></div>
     <div class="opt"><input id="tokenIn" type="password" autocomplete="off" placeholder="同步碼" aria-label="同步碼"><button class="btn" id="btnSaveToken">更新</button></div>
+    <div class="opt"><span>視窗尺寸</span><span class="hint" id="vpSize"></span></div>
     <div class="opt"><span>聽寫時自動念</span><label class="switch"><input type="checkbox" id="autoSay"></label></div>
     <div class="opt"><span>發音口音</span>
       <select id="accentSel"><option value="en-GB">英式 (UK)</option><option value="en-US">美式 (US)</option></select>
