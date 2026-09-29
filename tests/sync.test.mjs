@@ -98,6 +98,15 @@ test("bad_token during flush keeps the op queued", async () => {
   assert.deepEqual(sync.status(), { state: "bad_token", pending: 1 });
 });
 
+test("request returns the server response or rejects with its error code", async () => {
+  const { sync, fetchFn } = make(b => (b.op === "add" ? (b.w === "dup" ? { ok: false, error: "exists" } : { ok: true, row: 9 }) : { ok: true }));
+  assert.deepEqual(await sync.request({ op: "add", w: "new", zh: "x" }), { ok: true, row: 9 });
+  assert.equal(fetchFn.calls[0].token, "T");
+  await assert.rejects(sync.request({ op: "add", w: "dup", zh: "x" }), { code: "exists" });
+  const off = make(() => new TypeError("Failed to fetch"));
+  await assert.rejects(off.sync.request({ op: "add", w: "a", zh: "b" }), { code: "network" });
+});
+
 test("queue survives a page reload (new instance, same storage)", async () => {
   const storage = memStorage();
   const a = make(() => new TypeError("offline"), { storage });

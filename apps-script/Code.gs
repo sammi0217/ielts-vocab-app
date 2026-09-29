@@ -33,6 +33,7 @@ function doPost(e) {
     if (req.op === "fam") res = setFam_(req);
     else if (req.op === "done") res = addLog_(req);
     else if (req.op === "spell") res = setSpell_(req);
+    else if (req.op === "add") res = addWord_(req);
     else res = { ok: false, error: "bad_request" };
     if (res.ok && req.opId) rememberOp_(req.opId);
     return out_(res);
@@ -119,6 +120,25 @@ function setSpell_(req) {
   const miss = (Number(ws.getRange(row, 16).getValue()) || 0) + (req.ok ? 0 : 1);
   ws.getRange(row, 15, 1, 2).setValues([[req.ok ? "對" : "錯", miss]]);
   return { ok: true };
+}
+
+// Quick-add a word from class (a synonym group per row). Appends after the last row; the word must be new.
+function addWord_(req) {
+  const w = String(req.w || "").trim(), zh = String(req.zh || "").trim();
+  if (!w || !zh) return { ok: false, error: "bad_request" };
+  const ws = SpreadsheetApp.getActive().getSheetByName(SHEET_WORDS);
+  ensureSpellCols_(ws);
+  const last = ws.getLastRow();
+  if (last >= 2) {
+    const existing = ws.getRange(2, 3, last - 1, 1).getValues().map(r => String(r[0]).trim().toLowerCase());
+    if (existing.indexOf(w.toLowerCase()) >= 0) return { ok: false, error: "exists" };
+  }
+  const row = last + 1;
+  ws.getRange(row, 1, 1, WORD_COLS).setValues([[
+    row - 1, String(req.cat || "課堂單字"), w, String(req.pos || ""), zh, "", "", "",
+    String(req.syn || ""), "-", FAM[0], "", 0, String(req.note || ""), "", 0,
+  ]]);
+  return { ok: true, row: row };
 }
 
 function addLog_(req) {

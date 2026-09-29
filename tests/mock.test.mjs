@@ -40,6 +40,16 @@ test("spell records the latest result and counts misses once per opId", async ()
   assert.deepEqual([r.words[0].spell, r.words[0].miss], ["對", 1]);
 });
 
+test("add appends a word on the next row and rejects duplicates", async () => {
+  const f = createMockFetch(seed);
+  const r = await post(f, { op: "add", token: "mock", w: "extinct", zh: "絕種的", syn: "wiped out, vanished", cat: "閱讀課" });
+  assert.deepEqual(r, { ok: true, row: 3 });
+  const all = await post(f, { op: "get", token: "mock" });
+  assert.deepEqual(all.words[1], { row: 3, cat: "閱讀課", w: "extinct", pos: "", zh: "絕種的", en: "", ex: "", exzh: "", syn: "wiped out, vanished", ant: "-", fam: 0, date: "", cnt: 0, note: "", spell: "", miss: 0 });
+  assert.deepEqual(await post(f, { op: "add", token: "mock", w: "Extinct", zh: "x" }), { ok: false, error: "exists" });
+  assert.deepEqual(await post(f, { op: "add", token: "mock", w: "", zh: "x" }), { ok: false, error: "bad_request" });
+});
+
 test("done appends to the log", async () => {
   const f = createMockFetch(seed);
   await post(f, { op: "done", token: "mock", opId: "c", round: 1, portion: 1, date: "2026-09-23", words: 47, minutes: 9, note: "" });

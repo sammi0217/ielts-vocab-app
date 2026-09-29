@@ -18,6 +18,15 @@ export function createMockFetch(seed, token = "mock") {
       seen.add(req.opId);
       return reply({ ok: true, cnt: w.cnt });
     }
+    if (req.op === "add") {
+      const w = String(req.w || "").trim(), zh = String(req.zh || "").trim();
+      if (!w || !zh) return reply({ ok: false, error: "bad_request" });
+      if (data.words.some(x => x.w.toLowerCase() === w.toLowerCase())) return reply({ ok: false, error: "exists" });
+      const row = Math.max(1, ...data.words.map(x => x.row)) + 1;
+      data.words.push({ row, cat: req.cat || "課堂單字", w, pos: req.pos || "", zh, en: "", ex: "", exzh: "", syn: req.syn || "", ant: "-", fam: 0, date: "", cnt: 0, note: req.note || "", spell: "", miss: 0 });
+      if (req.opId) seen.add(req.opId);
+      return reply({ ok: true, row });
+    }
     if (req.op === "spell") {
       const w = data.words.find(x => x.row === req.row);
       if (!w || w.w !== req.w) return reply({ ok: false, error: "not_found" });

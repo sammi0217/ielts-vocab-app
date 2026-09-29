@@ -1,5 +1,5 @@
 import {
-  FAM, PORTION_SIZES, ymd, addDays, fmtMD, fmtMDW, schedule, portionDate, portionStatus,
+  FAM, PORTION_SIZES, PORTION_BOUNDS, ymd, addDays, fmtMD, fmtMDW, schedule, portionDate, portionStatus,
   canMarkDone, isDone, portionIndices, buildIcs, ratedSince, isRated,
   roundDates, streak, famCounts, heatmap, spellTarget, checkSpelling, typeProgress, hintPattern,
 } from "./logic.js";
@@ -380,6 +380,12 @@ function renderSpellHome() {
   $("spWrongGo").textContent = `練這 ${wrong.length} 個`;
   $("spWrongGo").classList.toggle("hidden", !wrong.length);
   $("spWrongGo").onclick = () => openSpell(wrong, "拼錯清單");
+  // words added from class (beyond the 327 in rotation), one deck per category
+  const extra = new Map();
+  data.words.forEach((w, i) => { if (i >= PORTION_BOUNDS[6][1]) extra.set(w.cat || "課堂單字", [...(extra.get(w.cat || "課堂單字") || []), i]); });
+  $("spExtra").innerHTML = [...extra].map(([cat, idx], k) => `<button class="btn" data-k="${k}"><span>${esc(cat)}</span><span class="hint">${idx.length} 字</span></button>`).join("");
+  const decks = [...extra];
+  $("spExtra").querySelectorAll("button").forEach(b => { b.onclick = () => openSpell(decks[+b.dataset.k][1], decks[+b.dataset.k][0]); });
 }
 const spRow = (w, note) => `<div class="sp-row"><b>${esc(spellTarget(w.w))}</b><span>${esc(w.zh)}</span>${note ? `<em>${note}</em>` : ""}</div>`;
 
@@ -459,6 +465,38 @@ $("spHintBtn").onclick = () => { if (!sp) return; sp.hint = Math.min(2, sp.hint 
 $("spBack").onclick = closeSpell;
 $("spExit").onclick = closeSpell;
 $("spRetry").onclick = () => { const t = sp.title; openSpell(sp.wrong, `${t} · 重練`); };
+
+/* ===== quick-add a word from class ===== */
+$("btnAddWord").onclick = () => {
+  $("addCat").value = prefs.addCat || "閱讀課";
+  $("addStatus").textContent = "";
+  $("addSheet").classList.add("open");
+  setTimeout(() => $("addW").focus(), 50);
+};
+$("btnAddClose").onclick = () => $("addSheet").classList.remove("open");
+$("addSheet").addEventListener("click", e => { if (e.target === $("addSheet")) $("addSheet").classList.remove("open"); });
+["addW", "addZh", "addSyn", "addCat"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addWord(); } }));
+$("btnAddSave").onclick = addWord;
+async function addWord() {
+  const w = $("addW").value.trim(), zh = $("addZh").value.trim(), syn = $("addSyn").value.trim(), cat = $("addCat").value.trim() || "閱讀課";
+  const st = $("addStatus"), btn = $("btnAddSave");
+  if (!w || !zh) { st.textContent = "單字和中文都要填。"; return; }
+  if (data.words.some(x => x.w.toLowerCase() === w.toLowerCase())) { st.textContent = `「${w}」已經在單字庫裡了。`; return; }
+  btn.disabled = true; st.textContent = "存入中…";
+  try {
+    await sync.request({ op: "add", w, zh, syn, cat });
+    prefs.addCat = cat; storage.set("iv_prefs", prefs);
+    st.textContent = `已新增「${w}」，可以繼續輸入下一個。`;
+    $("addW").value = ""; $("addZh").value = ""; $("addSyn").value = ""; $("addW").focus();
+    toast(`已新增 ${w}`);
+    try { data = await sync.load(); showMain(); } catch (e) { /* stays cached until next load */ }
+  } catch (e) {
+    st.textContent = e.code === "exists" ? `「${w}」已經在單字庫裡了。`
+      : e.code === "network" ? "連不上試算表，離線時無法新增。"
+      : e.code === "bad_token" ? "同步碼錯誤，到設定更新。"
+      : "新增失敗：" + (e.code || e.message);
+  } finally { btn.disabled = false; }
+}
 
 /* ===== list ===== */
 function buildCatSel() {

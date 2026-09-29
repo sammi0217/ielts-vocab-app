@@ -82,5 +82,17 @@ export function createSync({
     return flushing;
   }
 
-  return { load, cached, enqueue, flush, status };
+  // One-shot request whose response the caller needs (e.g. adding a word returns its row). Not queued.
+  async function request(op) {
+    const res = await call(op);
+    if (!res.ok) {
+      if (res.error === "bad_token") set("bad_token");
+      const err = new Error(res.error);
+      err.code = res.error;
+      throw err;
+    }
+    return res;
+  }
+
+  return { load, cached, enqueue, flush, status, request };
 }
