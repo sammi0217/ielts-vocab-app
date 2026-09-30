@@ -59,6 +59,12 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .ic{width:1em;height:1em;fill:currentColor;flex:none;vertical-align:-0.125em}
 
 /* home: week strip */
+.week-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;padding:0 2px}
+.wk-label{font-size:13px;font-weight:600;color:var(--muted)}
+.wk-label b{color:var(--ink);margin-right:6px}
+.wk-nav{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--ink);font-size:15px}
+.wk-nav:disabled{opacity:.25;cursor:default}
+#wkNext .ic{transform:scaleX(-1)}
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}
 .day{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 10px;border-radius:999px;border:1.5px solid transparent;color:var(--muted)}
 .day small{font-size:11px;font-weight:500}
@@ -99,6 +105,7 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .heat .ml{grid-row:1;white-space:nowrap;line-height:14px;overflow:visible;min-width:0}
 .heat .dl{grid-column:1;line-height:1;align-self:center}
 .heat i{aspect-ratio:1;border-radius:4px;background:var(--surface-2)}
+.heat i.done,.heat i.missed,.heat i.today{cursor:pointer}
 .heat i.pre,.heat i.future{background:#1B1B19}
 .heat i.missed{background:transparent;box-shadow:inset 0 0 0 1.5px #6A6A63}
 .heat i.today{box-shadow:inset 0 0 0 1.5px var(--lime)}
@@ -303,6 +310,9 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
   .tabs{margin:4px 0 8px;padding:3px}
   .tab{padding:4px 10px;font-size:13px}
   /* home: week strip + hero shrink to one screen; stats scroll below */
+  .week-head{margin-bottom:2px}
+  .wk-nav{width:26px;height:26px;font-size:12px}
+  .wk-label{font-size:11px}
   .week{gap:2px;margin-bottom:6px}
   .day{padding:2px 0 4px;gap:0}
   .day small{font-size:10px}
@@ -390,7 +400,12 @@ select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px 
     </div>
 
     <section id="viewHome">
-      <div class="week" id="week" role="group" aria-label="本輪 7 天"></div>
+      <div class="week-head">
+        <button class="wk-nav" id="wkPrev" aria-label="上一輪"><span data-icon="back"></span></button>
+        <span class="wk-label" id="wkLabel"></span>
+        <button class="wk-nav" id="wkNext" aria-label="下一輪"><span data-icon="back"></span></button>
+      </div>
+      <div class="week" id="week" role="group" aria-label="這一輪的 7 天"></div>
       <div class="hero">
         <span class="hero-no num" id="hNo" aria-hidden="true"></span>
         <div class="hero-top"><span id="hLabel"></span></div>

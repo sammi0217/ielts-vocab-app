@@ -137,6 +137,11 @@ test("famCounts tallies the four levels", () => {
   assert.deepEqual(L.famCounts([{ fam: 0 }, { fam: 3 }, { fam: 3 }, { fam: 1 }]), [1, 1, 0, 2]);
 });
 
+test("roundDatesOf lists the 7 dates of any round", () => {
+  assert.deepEqual(L.roundDatesOf(1), ["2026-09-23", "2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-09-29"]);
+  assert.equal(L.roundDatesOf(2)[0], "2026-09-30");
+});
+
 test("lastDays lists n days ending today", () => {
   assert.deepEqual(L.lastDays("2026-10-01", 3), ["2026-09-29", "2026-09-30", "2026-10-01"]);
 });

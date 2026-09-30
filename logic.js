@@ -103,6 +103,9 @@ export function roundDates(today, start = START) {
   const { round } = schedule(today, start);
   return [1, 2, 3, 4, 5, 6, 7].map(k => portionDate(round, k, start));
 }
+export function roundDatesOf(round, start = START) {
+  return [1, 2, 3, 4, 5, 6, 7].map(k => portionDate(round, k, start));
+}
 export function lastDays(today, n) {
   return Array.from({ length: n }, (_, i) => addDays(today, i - n + 1));
 }

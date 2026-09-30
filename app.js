@@ -1,7 +1,7 @@
 import {
   FAM, PORTION_SIZES, PORTION_BOUNDS, ymd, addDays, fmtMD, fmtMDW, schedule, portionDate, portionStatus,
   canMarkDone, isDone, portionIndices, buildIcs, ratedSince, isRated,
-  roundDates, streak, famCounts, heatmap, spellTarget, checkSpelling, typeProgress, hintPattern,
+  roundDates, roundDatesOf, streak, famCounts, heatmap, spellTarget, checkSpelling, typeProgress, hintPattern,
 } from "./logic.js";
 import { icon } from "./icons.js";
 import { createSync } from "./sync.js";
@@ -130,6 +130,7 @@ $("tabSpell").onclick = () => showTab("spell");
 
 /* ===== home ===== */
 let selDay = null;        // date picked in the week strip (null = today)
+let viewRound = null;     // round shown in the week strip (null = the current round)
 const wd = d => fmtMDW(d).match(/（(.)）/)[1];
 const HEAT_WEEKS = 13; // ~3 months: the length of the foundation plan
 const WD_ROWS = ["一", "", "三", "", "五", "", "日"];
@@ -139,25 +140,32 @@ function portionProgress(round, k, t) {
   return { deck, done: deck.filter(i => isRated(data.words[i], since)).length, since };
 }
 function renderHome() {
-  const t = today(), s = schedule(t), dates = roundDates(t), log = data.log;
-  const sel = dates.includes(selDay) ? selDay : t;
+  const t = today(), s = schedule(t), log = data.log;
+  const round = Math.min(Math.max(viewRound || s.round, 1), s.round), dates = roundDatesOf(round);
+  const sel = dates.includes(selDay) ? selDay : round === s.round ? t : dates[0];
+
+  $("wkLabel").innerHTML = `<b>第 ${round} 輪</b>${fmtMD(dates[0])} – ${fmtMD(dates[6])}`;
+  $("wkPrev").disabled = round <= 1;
+  $("wkNext").disabled = round >= s.round;
+  $("wkPrev").onclick = () => { viewRound = round - 1; selDay = null; renderHome(); };
+  $("wkNext").onclick = () => { viewRound = round + 1; selDay = null; renderHome(); };
 
   $("week").innerHTML = dates.map((d, i) => {
-    const st = portionStatus(log, s.round, i + 1, t);
+    const st = portionStatus(log, round, i + 1, t);
     const cls = `day st-${st}${d === t ? " is-today" : ""}${d === sel ? " is-sel" : ""}`;
     return `<button class="${cls}" data-d="${d}" aria-pressed="${d === sel}" aria-label="${fmtMDW(d)} 第 ${i + 1} 份"><small>${wd(d)}</small><b>${Number(d.slice(8))}</b><i></i></button>`;
   }).join("");
   $("week").querySelectorAll(".day").forEach(b => { b.onclick = () => { selDay = b.dataset.d; renderHome(); }; });
 
-  const k = dates.indexOf(sel) + 1, st = portionStatus(log, s.round, k, t);
-  const { deck, done } = portionProgress(s.round, k, t), n = deck.length;
+  const k = dates.indexOf(sel) + 1, st = portionStatus(log, round, k, t);
+  const { deck, done } = portionProgress(round, k, t), n = deck.length;
   $("hNo").textContent = String(k).padStart(2, "0");
   $("hLabel").textContent = `第 ${k} 份`;
   $("hNum").textContent = done;
   $("hDen").textContent = `/ ${n}`;
   $("hBar").style.width = n ? Math.round((done / n) * 100) + "%" : "0";
   $("btnStart").innerHTML = st === "done" ? "再看一次" : done ? "繼續 →" : "開始 →";
-  $("btnStart").onclick = () => startPortion(s.round, k);
+  $("btnStart").onclick = () => startPortion(round, k);
   $("btnSpell").onclick = () => openSpell(deck, `第 ${k} 份`);
 
   $("sStreak").textContent = streak(log, t);
@@ -184,6 +192,11 @@ function renderHeat(t) {
   }));
   el.innerHTML = html;
   el.setAttribute("aria-label", `最近 ${HEAT_WEEKS} 週的完成紀錄，連續 ${streak(data.log, t)} 天`);
+  // tapping a past day jumps the week strip to that round and day
+  el.querySelectorAll("i.done,i.missed,i.today").forEach((cell, idx) => {
+    const c = cols.flat().filter(x => ["done", "missed", "today"].includes(x.state))[idx];
+    cell.onclick = () => { viewRound = schedule(c.date).round; selDay = c.date; renderHome(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  });
 }
 
 /* ===== cards ===== */
