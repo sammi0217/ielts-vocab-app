@@ -53,6 +53,8 @@ function toDate_(s) {
   return Utilities.parseDate(s, TZ, "yyyy-MM-dd");
 }
 function toNum_(v) {
+  // A number typed into a date-formatted cell comes back as a Date; recover the sheet serial (1899-12-30 = 0).
+  if (v instanceof Date) return Math.round((v.getTime() - new Date(1899, 11, 30).getTime()) / 86400000);
   const m = String(v == null ? "" : v).match(/\d+/);
   return m ? Number(m[0]) : 0;
 }
@@ -147,6 +149,9 @@ function addLog_(req) {
   const lg = SpreadsheetApp.getActive().getSheetByName(SHEET_LOG);
   lg.getRange(LOG_START - 2, 1).setValue(LOG_TITLE);
   lg.getRange(LOG_START - 1, 1, 1, LOG_HEADER.length).setValues([LOG_HEADER]);
+  // the old template formatted column B as a date; keep 輪次/份數 numeric and 日期 as a date
+  lg.getRange(LOG_START, 1, 500, 2).setNumberFormat("0");
+  lg.getRange(LOG_START, 3, 500, 1).setNumberFormat("yyyy-mm-dd");
   const n = Math.max(lg.getLastRow() - LOG_START + 1, 0);
   let row = LOG_START + n;
   if (n) {

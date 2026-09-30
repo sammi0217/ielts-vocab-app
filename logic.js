@@ -120,8 +120,14 @@ export function streak(log, today) {
 // show the whole plan ahead; once today passes the last column it scrolls to end with the current week.
 // Each cell: { date, state: "pre" | "future" | "done" | "missed" | "today", n } where n = portions marked done that day.
 export function heatmap(log, today, weeks, start = START) {
-  const count = {};
-  for (const r of log) count[r.date] = (count[r.date] || 0) + 1;
+  // count distinct portions per day, so a portion marked twice by mistake doesn't read as "two portions"
+  const seen = new Set(), count = {};
+  for (const r of log) {
+    const key = `${r.date}|${r.round}|${r.portion}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    count[r.date] = (count[r.date] || 0) + 1;
+  }
   const mondayOf = d => addDays(d, -((parseYmd(d).getDay() + 6) % 7));
   const trailing = addDays(mondayOf(today), -(weeks - 1) * 7), anchored = mondayOf(start);
   const first = trailing > anchored ? trailing : anchored;

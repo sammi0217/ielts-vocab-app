@@ -148,7 +148,7 @@ test("lastDays lists n days ending today", () => {
 
 test("heatmap: Monday-first weeks anchored at the start week, with day states", () => {
   // 2026-09-25 is a Friday; start week begins Mon 9/21 -> 2 weeks = 9/21 .. 10/4
-  const log = [{ date: "2026-09-23" }, { date: "2026-09-25" }, { date: "2026-09-25" }];
+  const log = [{ date: "2026-09-23", round: 1, portion: 1 }, { date: "2026-09-25", round: 1, portion: 2 }, { date: "2026-09-25", round: 1, portion: 3 }];
   const g = L.heatmap(log, "2026-09-25", 2);
   assert.equal(g.length, 2);
   assert.equal(g[0][0].date, "2026-09-21");
@@ -161,6 +161,9 @@ test("heatmap: Monday-first weeks anchored at the start week, with day states", 
   assert.deepEqual(at("2026-09-25"), { date: "2026-09-25", state: "done", n: 2 });
   assert.equal(at("2026-09-26").state, "future");
   assert.equal(L.heatmap([], "2026-09-25", 1).flat().find(c => c.date === "2026-09-25").state, "today");
+  // the same portion marked twice on one day counts once
+  const dup = L.heatmap([{ date: "2026-09-25", round: 1, portion: 3 }, { date: "2026-09-25", round: 1, portion: 3 }], "2026-09-25", 1);
+  assert.equal(dup.flat().find(c => c.date === "2026-09-25").n, 1);
   // after the anchored window is used up, it ends with the current week
   const late = L.heatmap([], "2026-12-30", 2);
   assert.equal(late[1][0].date, "2026-12-28");
